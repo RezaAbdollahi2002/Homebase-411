@@ -1,0 +1,20 @@
+react-router-dom
+@heroicons/react
+react-toastify
+react-input-mask
+react-input-mask@next
+react-typed --save
+# import { Typewriter } from 'react-simple-typewriter';
+react-hook-form
+react-datepicker
+date-fns
+mdb-react-ui-kit --legacy-peer-deps
+@react-google-maps/api --legacy-peer-deps
+axios --legacy-peer-deps
+@mui/x-date-pickers @mui/material @emotion/react @emotion/styled --legacy-peer
+react-icons --legacy-peer-deps
+react-hook-form @hookform/resolvers yup react-icons --legacy-peer-deps
+dayjs --legacy-peer-deps
+--legacy-peer-deps
+@fullcalendar/react @fullcalendar/core @fullcalendar/daygrid @fullcalendar/timegrid @fullcalendar/interaction --force
+

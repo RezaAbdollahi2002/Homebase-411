@@ -1,0 +1,11 @@
+fastapi 
+uvicorn 
+python-jose 
+passlib[bcrypt]
+sqlalchemy
+pydantic[email]
+python-multipart
+twilio
+python-dotenv
+pip install "python-socketio[asyncio]" "python-socketio[client]"
+pip install fastapi uvicorn fastapi-mail python-dotenv

@@ -5,7 +5,6 @@ from typing import List
 import os
 from dotenv import load_dotenv
 
-from users import router as user_router
 from routes.employee import router as employee_router
 from routes.employer import router as employer_router
 from routes.company import router as company_router

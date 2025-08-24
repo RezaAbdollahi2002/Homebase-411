@@ -7,5 +7,9 @@ pydantic[email]
 python-multipart
 twilio
 python-dotenv
-pip install "python-socketio[asyncio]" "python-socketio[client]"
-pip install fastapi uvicorn fastapi-mail python-dotenv
+python-socketio[asyncio]
+python-socketio[client]
+fastapi
+uvicorn
+fastapi-mail
+python-dotenv

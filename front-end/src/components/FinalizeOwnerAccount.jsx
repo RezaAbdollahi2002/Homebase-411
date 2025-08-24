@@ -33,7 +33,7 @@ const FinalizeOwnerAccount = () => {
 
 const checkCompany = async (companyPayload) => {
   try {
-    const response = await axios.get("/api/check_company", {
+    const response = await axios.get("http://localhost:8000/company-signup-check", {
       params: {
         name: companyPayload.name,
         kind: companyPayload.kind,
@@ -77,16 +77,6 @@ const mapSignupData = async () => {
       setIsSubmitting(false);
       return;
     }
-    if (checkResult.kind_exists) {
-      setError("A company of this kind already exists.");
-      setIsSubmitting(false);
-      return;
-    }
-    if (checkResult.open_date_exists) {
-      setError("A company with this open date already exists.");
-      setIsSubmitting(false);
-      return;
-    }
 
     // 🔹 Step 2: Proceed with normal signup flow
     const companyResponse = await axios.post("/api/company-signup", companyPayload);
@@ -101,6 +91,7 @@ const mapSignupData = async () => {
       username: signupData.username,
       password: signupData.password,
     };
+    console.log(employerPayload.company_id)
 
     await axios.post("/api/employer-signup", employerPayload);
 

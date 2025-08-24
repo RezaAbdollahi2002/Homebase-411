@@ -21,15 +21,38 @@ const UserSignup = () => {
   },
 });
 
-  const onSubmit =  (data) => {
-    updateSignupData(data)
-    if (fromReview){
-      navigate("/onboarding/sign-up/user-account-edit-checking")
-    }else{
-    navigate('/onboarding/sign-up/user-contact')
-    
-    }
-  }
+  const onSubmit = async (data) => {
+      try {
+        // Call backend to check employer_id
+        const response = await fetch(
+          `/api/checks/employee/signup/employerid?employer_id=${data.employer_id}`
+        );
+
+        if (!response.ok) {
+          // backend raises 404 -> employer not found
+          const err = await response.json();
+          alert(err.detail || "Employer not found");
+          return; // stop navigation
+        }
+
+        const result = await response.json();
+        if (!result.employer_id_check) {
+          alert("Employer ID is invalid");
+          return;
+        }
+
+        // ✅ Employer exists, continue with signup
+        updateSignupData(data);
+        if (fromReview) {
+          navigate("/onboarding/sign-up/user-account-edit-checking");
+        } else {
+          navigate("/onboarding/sign-up/user-contact");
+        }
+      } catch (error) {
+        console.error("Error checking employer ID:", error);
+        alert("Something went wrong. Please try again.");
+      }
+    };
 
 
   return (
@@ -126,7 +149,7 @@ const UserSignup = () => {
             id="employer_id"
             type="text"
             {...register("employer_id", {required: true})}
-            placeholder="employee ID number"
+            placeholder="employer ID number"
             className="input border border-gray-400 rounded-lg px-2 hover:border-gray-600"
           />
           {errors.employer_id && <p className="text-red-500 text-sm">Employer ID is required</p>}

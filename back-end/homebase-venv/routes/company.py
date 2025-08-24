@@ -41,6 +41,16 @@ def check_company(
         "open_date_exists": open_date_exists,
     }
 
+@router.get("/company/generate-companyid")
+def generate_company_id(db: Session = Depends(get_db)):
+    last_company = (
+        db.query(models.Company)
+        .order_by(models.Company.id.desc())  # order by ID descending
+        .first().id  # take the first row
+    )
+    if not last_company:
+        return {"company_id": 1} 
+    return {"company_id": last_company+1}
 
 #  COMPANY SIGNUP
 @router.post("/company-signup", status_code=status.HTTP_201_CREATED, tags=['Company'])

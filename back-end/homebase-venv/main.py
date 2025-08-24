@@ -5,7 +5,6 @@ from typing import List
 import os
 from dotenv import load_dotenv
 
-from users import router as user_router
 from routes.employee import router as employee_router
 from routes.employer import router as employer_router
 from routes.company import router as company_router
@@ -17,6 +16,8 @@ from routers.sms_router import router as sms_router
 import models
 from routes.shifts import router as shifts_router
 from database import engine
+from routes.check import router as check_router
+from routes.team import router as team_router
 
 # Load environment variables
 load_dotenv()
@@ -52,6 +53,9 @@ app.include_router(chat_router)
 app.include_router(email_router)
 app.include_router(sms_router)
 app.include_router(shifts_router)
+app.include_router(check_router)
+app.include_router(team_router)
+
 app.include_router(availabilities_router)  # Fixed typo
 
 # WebSocket connections

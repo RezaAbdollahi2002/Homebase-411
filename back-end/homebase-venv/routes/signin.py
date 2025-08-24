@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, HTTPException, Depends
+from fastapi import APIRouter, Query, status, HTTPException, Depends
 import models
 import schemas
 from database import Session, get_db
@@ -36,3 +36,9 @@ def signin(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
 
 
 
+@router.get('/signin-signup-username-check', status_code=status.HTTP_200_OK, response_model = schemas.checkusernameEmployer, tags=['Employer'])
+def check_employer_username(username: str = Query(..., min_length= 8), db: Session = Depends(get_db)):
+    username_employer = db.query(models.Employer).filter(models.Employer.username == username).first() is not None;
+    username_employee = db.query(models.Employee).filter(models.Employee.username == username).first() is not None;
+    exists  = username_employer or username_employee
+    return {"exists" : exists }

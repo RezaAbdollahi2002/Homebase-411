@@ -71,7 +71,7 @@ const UserAccountinfo = () => {
             {...register("userName", {
               required: "Username is required",
               minLength: {
-                value: 4,
+                value: 8,
                 message: "Username must be at least 4 characters",
               },
               maxLength: {
@@ -79,7 +79,7 @@ const UserAccountinfo = () => {
                 message: "Username must be no more than 20 characters",
               },
               pattern: {
-                value: /^[a-zA-Z0-9_.]+$/,
+                value: /^(?=.*[_.])[a-zA-Z0-9_.]+$/,
                 message:
                   "Username can only contain letters, numbers, and _ or .",
               },
@@ -87,7 +87,7 @@ const UserAccountinfo = () => {
                 if (!value) return "Username is required";
                 try {
                   const res = await fetch(
-                    `/api/employee-signup-username-check?username=${encodeURIComponent(
+                    `/api/checks/employee-signup-username-check?username=${encodeURIComponent(
                       value
                     )}`
                   );

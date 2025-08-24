@@ -10,6 +10,7 @@ const OwnerSignupForm = () => {
   const location = useLocation();
   const formReview = location.state?.formReview || false;
 
+  const [companyId, setCompanyId] = useState(null); // initially null
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
 
@@ -18,44 +19,38 @@ const OwnerSignupForm = () => {
     handleSubmit,
     formState: { errors },
     setError,
-    clearErrors,
-    watch,
     reset,
+    watch,
   } = useForm({
     defaultValues: {
       firstName: signupData.firstName || "",
       lastName: signupData.lastName || "",
       phoneNumber: signupData.phoneNumber || "",
       email: signupData.email || "",
-      company_id: signupData.company_id || "",
+      company_id: companyId || "",
       otp: "",
     },
   });
 
-  const checkCompanyId = async (company_id) => {
-    try {
-      const response = await axios.get("/api/employer-signup-companyid-check", {
-        params: { company_id },
-      });
-      return response.data; // expects { companyid_exists: boolean }
-    } catch (err) {
-      console.error("Error checking company_id", err);
-      return null;
-    }
-  };
+  // Fetch company ID once on mount
+  useEffect(() => {
+    const fetchCompanyId = async () => {
+      try {
+        const res = await axios.get("/api/company/generate-companyid");
+        setCompanyId(res.data.company_id);
+      } catch (err) {
+        console.error("Failed to fetch company ID:", err);
+      }
+    };
+    fetchCompanyId();
+  }, []);
 
-  const checkEmailAndPhone = async (email, phoneNumber) => {
-    try {
-      const response = await axios.get("/api/employer-signup-phonenumber-email-check", {
-        params: { email, phone_number: phoneNumber },
-      });
-      return response.data;
-    } catch (err) {
-      console.error("Error checking email/phone", err);
-      return null;
-    }
-  };
+  // Debug log for updated companyId
+  useEffect(() => {
+    if (companyId !== null) console.log("Fetched companyId:", companyId);
+  }, [companyId]);
 
+  // Reset form if reviewing
   useEffect(() => {
     if (formReview) {
       reset({
@@ -63,15 +58,29 @@ const OwnerSignupForm = () => {
         lastName: signupData.lastName || "",
         phoneNumber: signupData.phoneNumber || "",
         email: signupData.email || "",
-        company_id: signupData.company_id || "",
+        company_id: signupData.companyId || companyId || "",
       });
     }
-  }, [formReview, signupData, reset]);
+  }, [formReview, signupData, reset, companyId]);
 
-  // ====== OTP FUNCTIONS ======
+  // Check if email or phone exists
+  const checkEmailAndPhone = async (email, phoneNumber) => {
+    try {
+      const response = await axios.get("/api/employer-signup-phonenumber-email-check", {
+        params: { phone_number: phoneNumber , email},
+      });
+      return response.data; // { email_exists: bool, phone_exists: bool }
+    } catch (err) {
+      console.error("Error checking email/phone", err);
+      return null;
+    }
+  };
+
+  // Send OTP
   const sendOtp = async () => {
     const email = watch("email");
     if (!email) return alert("Enter an email first");
+
     try {
       const res = await axios.post("http://localhost:8000/send-otp/", { email });
       alert(res.data.message);
@@ -82,9 +91,11 @@ const OwnerSignupForm = () => {
     }
   };
 
+  // Verify OTP
   const verifyOtp = async (otp) => {
     const email = watch("email");
     if (!otp) return alert("Enter the OTP");
+
     try {
       const res = await axios.post("http://localhost:8000/verify-otp/", {
         email,
@@ -104,12 +115,12 @@ const OwnerSignupForm = () => {
     }
   };
 
+  // Form submission
   const onSubmit = async (data) => {
-    const { email, phoneNumber, company_id } = data;
-
-    // Check email & phone
+    if (!companyId) return alert("Company ID is not ready. Please wait.");
+    
+    const { email, phoneNumber } = data;
     const result = await checkEmailAndPhone(email, phoneNumber);
-
     let hasErrors = false;
 
     if (result?.email_exists) {
@@ -120,22 +131,13 @@ const OwnerSignupForm = () => {
       setError("phoneNumber", { type: "manual", message: "Phone number is already registered" });
       hasErrors = true;
     }
-
-    // Check company_id
-    if (company_id) {
-      const companyResult = await checkCompanyId(company_id);
-      if (companyResult?.companyid_exists) {
-        setError("company_id", { type: "manual", message: "Company ID is already registered" });
-        hasErrors = true;
-      }
-    }
-
     if (hasErrors) return;
 
-    // Ensure OTP verified
     if (!otpVerified) return alert("Please verify your email OTP");
 
-    updateSignupData(data);
+    // Include the fetched companyId in the final data
+    const finalData = { ...data, company_id: companyId };
+    updateSignupData(finalData);
 
     if (formReview) {
       navigate("/onboarding/sign-up/business-info/finalize-create-owner-account");
@@ -198,18 +200,6 @@ const OwnerSignupForm = () => {
           />
           {errors.phoneNumber && <p className="text-red-500 text-sm">{errors.phoneNumber.message}</p>}
         </div>
-
-        {/* Company ID */}
-        <div className="my-2">
-          <p className="text-medium py-1">Company ID</p>
-          <input
-            type="text"
-            placeholder="2"
-            {...register("company_id")}
-            className="input border border-gray-400 px-2 rounded-sm outline-none focus:no-outline"
-          />
-          {errors.company_id && <p className="text-red-500 text-sm">{errors.company_id.message}</p>}
-        </div>
       </div>
 
       {/* OTP Section */}
@@ -241,10 +231,14 @@ const OwnerSignupForm = () => {
         Send OTP
       </button>
 
+      {/* Hidden company_id */}
+      <input type="hidden" {...register("company_id")} value={companyId?.toString() || ""} />
+
       {/* Submit */}
       <button
         type="submit"
         className="mt-4 bg-purple-700 text-white px-6 py-2 rounded-lg hover:bg-purple-800 transition duration-150"
+        disabled={companyId === null}
       >
         Next
       </button>

@@ -32,7 +32,7 @@ const UserContactInfoSignup = () => {
   const checkUniqueness = async (email, phoneNumber) => {
     try {
       const res = await fetch(
-        `http://localhost:8000/employee-signup-phonenumber-email-check?email=${encodeURIComponent(
+        `/api/checks/employee-signup-phonenumber-email-check?email=${encodeURIComponent(
           email
         )}&phone_number=${encodeURIComponent(phoneNumber)}`,
         { method: "GET" }
@@ -166,6 +166,8 @@ const UserContactInfoSignup = () => {
               <input
                 id="otp"
                 type="text"
+                inputMode="numeric"
+                maxLength={6}
                 {...register("otp", {
                   required: "OTP is required",
                   pattern: { value: /^[0-9]{6}$/, message: "OTP must be 6 digits" },

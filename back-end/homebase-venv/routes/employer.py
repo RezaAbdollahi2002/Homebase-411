@@ -23,8 +23,10 @@ def check_employer_phonenumber_email(phone_number:str = Query(...,min_length=10)
 
 @router.get('/employer-signup-username-check', status_code=status.HTTP_200_OK, response_model = schemas.checkusernameEmployer, tags=['Employer'])
 def check_employer_username(username: str = Query(..., min_length= 8), db: Session = Depends(get_db)):
-    username = db.query(models.Employer).filter(models.Employer.username == username).first() is not None;
-    return {"exists" : username}
+    username_employer = db.query(models.Employer).filter(models.Employer.username == username).first() is not None;
+    username_employee = db.query(models.Employee).filter(models.Employee.username == username).first() is not None;
+    exists  = username_employer or username_employee
+    return {"exists" : exists }
     
     
 @router.get("/employer-signup-companyid-check", status_code=status.HTTP_200_OK, tags=["Employer"], response_model=schemas.checkCompanyid)

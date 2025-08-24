@@ -11,24 +11,33 @@ const Team = () => {
   const [isEmployee, setIsEmployee] = useState(false);
 
   useEffect(() => {
-    const employeeId = localStorage.getItem("employee_id");
-    const employerId = localStorage.getItem("employer_id");
+  const employeeId = localStorage.getItem("employee_id");
+  const employerId = localStorage.getItem("employer_id");
 
-    if (employeeId) {
-      setIsEmployee(true);
-    } else if (employerId) {
-      setIsEmployee(false);
-    } else {
-      // Optionally redirect to login if neither ID exists
-      console.warn("No employee or employer ID found in localStorage");
-    }
+  if (employeeId) {
+    setIsEmployee(true);
 
-    // Fetch team members
-    fetch("/api/employees/team")
+    // Fetch team members by employee_id
+    fetch(`/api/employees/team?employee_id=${employeeId}`)
       .then((res) => res.json())
       .then((data) => setTeamMembers(data))
       .catch((err) => console.error("Failed to fetch team members:", err));
-  }, []);
+
+  } else if (employerId) {
+    setIsEmployee(false);
+
+    // Fetch team members by employer_id
+    fetch(`/api/employees/team?employer_id=${employerId}`)
+      .then((res) => res.json())
+      .then((data) => setTeamMembers(data))
+      .catch((err) => console.error("Failed to fetch team members:", err));
+
+  } else {
+    // Optionally redirect to login if neither ID exists
+    console.warn("No employee or employer ID found in localStorage");
+  }
+}, []);
+
 
   // Filter team members based on search input
   const filteredMembers = teamMembers.filter(member =>

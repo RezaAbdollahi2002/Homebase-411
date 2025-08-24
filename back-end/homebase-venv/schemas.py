@@ -28,6 +28,9 @@ class EmployeeUpdate(BaseModel):
     profile_picture: Optional[str]  # new optional field for picture URL/path
 
     model_config = ConfigDict(from_attributes=True)
+    
+class EmployeeEmployerIdCheck(BaseModel):
+    employer_id_check : bool
 
 class EmployeeIdSchema(BaseModel):
     id: int

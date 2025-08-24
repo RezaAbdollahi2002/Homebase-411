@@ -91,7 +91,6 @@ const UserCheckingAccountInfo = () => {
             </div>
             <p><strong>Phone Number:</strong> {signupData.phoneNumber}</p>
             <p><strong>Email:</strong> {signupData.email}</p>
-            <p><strong>Address:</strong> {signupData.address}</p>
           </section>
 
           {/* Account Information */}

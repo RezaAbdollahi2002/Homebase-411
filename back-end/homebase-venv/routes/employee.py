@@ -114,21 +114,7 @@ def get_employee_id(current_employee: models.Employee = Depends(get_current_empl
     return current_employee
 
 
-@router.get("/employee-signup-username-check", response_model=schemas.checkUserName, tags=['Employee'])
-def check_username_availability(username: str = Query(..., min_length=4), db: Session = Depends(get_db)):
-    # Query DB to find if username exists (case-insensitive example)
-    user = db.query(models.Employee).filter(models.Employee.username.ilike(username)).first()
-    return {"exists": bool(user)}
 
-@router.get("/employee-signup-phonenumber-email-check", response_model=schemas.checkPhonenumberEmail, tags=['Employee'])
-def check_username_availability(phone_number: str = Query(..., min_length=10), email: str = Query(...) , db: Session = Depends(get_db)):
-    # Query DB to find if username exists (case-insensitive example)
-    phone_exists = db.query(models.Employee).filter(models.Employee.phone_number == phone_number).first() is not None
-    email_exists = db.query(models.Employee).filter(models.Employee.email == email).first() is not None
-    return {
-        "phone_exists" : phone_exists,
-        "email_exists": email_exists
-    }
     
     
 @router.put("/employees/{employee_id}/profile-picture", tags=["Employee"])
@@ -191,8 +177,6 @@ def get_employee_location(employee_id: int, db: Session = Depends(get_db)):
     return {"location": location}
 
 
-from pydantic import BaseModel
-
 
 
 @router.put('/employees/settings/{employee_id}', tags=["Employee"])
@@ -223,17 +207,31 @@ def get_employee_info_setting(employee_id:int, db:Session=Depends(get_db)):
 
 
 @router.get("/employees/team")
-def get_employees(request: Request, db: Session = Depends(get_db)):
-    employees = db.query(models.Employee).all()
+def get_employees(
+    request: Request,
+    db: Session = Depends(get_db),
+    employee_id: Optional[int] = Query(None),
+    employer_id: Optional[int] = Query(None)
+):
+    # Determine employer_id
+    if employee_id:
+        employee = db.query(models.Employee).filter(models.Employee.id == employee_id).first()
+        if not employee:
+            raise HTTPException(status_code=404, detail="Employee not found")
+        employer_id = employee.employer_id
+    elif not employer_id:
+        raise HTTPException(status_code=400, detail="Either employee_id or employer_id must be provided")
+
+    # Get all employees for the employer
+    employees = db.query(models.Employee).filter(models.Employee.employer_id == employer_id).all()
+
     result = []
     for emp in employees:
         profile_url = None
         if emp.profile_picture:
             if emp.profile_picture.startswith("static/"):
-                # Use the static mount
-                profile_url = str(request.base_url) + emp.profile_picture  # e.g. /static/profile_pictures/...
+                profile_url = str(request.base_url) + emp.profile_picture
             else:
-                # Use the uploads mount
                 profile_url = str(request.base_url) + f"{emp.profile_picture.lstrip('/')}"
         result.append({
             "id": emp.id,
@@ -243,4 +241,3 @@ def get_employees(request: Request, db: Session = Depends(get_db)):
             "profile_picture": profile_url,
         })
     return result
-

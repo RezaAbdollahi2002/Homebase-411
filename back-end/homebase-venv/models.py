@@ -182,7 +182,7 @@ class EmployeeAvailability(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), nullable=True)  # label like "Vacation" (optional)
     employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
-    is_time_off = Column(Boolean, default=False)  # true = employee is not available
+    #is_time_off = Column(Boolean, default=False)  # true = employee is not available
 
     # Range
     start_date = Column(Date, nullable=False)

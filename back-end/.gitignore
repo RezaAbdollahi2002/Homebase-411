@@ -3,6 +3,5 @@ __pycache__/
 *.db
 *.sqlite3
 venv/
-routes/__pycache__/
-routes/__pycache__/
-
+routes/__pycache__/*
+routers/__pycache__/*

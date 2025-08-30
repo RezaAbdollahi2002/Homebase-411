@@ -215,7 +215,6 @@ def get_connected_employees(employee_id: int, request: Request, db: Session = De
 def create_conversation(request: ConversationCreateRequest, db: Session = Depends(get_db)):
     type = request.type
     participants = request.participants
-    name = request.name
 
     if type not in ["direct", "group"]:
         raise HTTPException(status_code=400, detail="Invalid type")
@@ -223,7 +222,9 @@ def create_conversation(request: ConversationCreateRequest, db: Session = Depend
     if type == "direct":
         if len(participants) != 2:
             raise HTTPException(status_code=400, detail="Direct chat needs 2 participants")
-        conv = Conversation(type="direct")
+        chatUser = _ensure_chat_user(db, participants[1])
+        name = chatUser.display_name
+        conv = Conversation(type="direct", name=name)
         db.add(conv)
         db.commit()
         db.refresh(conv)
@@ -235,6 +236,7 @@ def create_conversation(request: ConversationCreateRequest, db: Session = Depend
     if type == "group":
         if len(participants) < 3:
             raise HTTPException(status_code=400, detail="Group chat needs 3+ participants")
+        name = request.name
         if not name:
             raise HTTPException(status_code=400, detail="Group chat requires a name")
         conv = Conversation(type="group", name=name)

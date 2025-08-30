@@ -95,8 +95,6 @@ def get_or_create_direct_conversation(db: Session, user_ids: List[int]) -> Conve
 def create_chat_user(
     employee_id: Optional[str] = Form(None),
     employer_id: Optional[str] = Form(None),
-    role: str = Form(...),
-    display_name: str = Form(...),
     db: Session = Depends(get_db)
 ):
     employee_id_int = int(employee_id) if employee_id and employee_id.strip() else None
@@ -108,11 +106,15 @@ def create_chat_user(
     profile_picture_url = None
     if employee_id_int:
         employee = db.query(Employee).filter(Employee.id == employee_id_int).first()
+        display_name = f"{employee.first_name}"
+        role = "employee"
         if not employee:
             raise HTTPException(status_code=404, detail="Employee not found")
         profile_picture_url = employee.profile_picture
     else:
         employer = db.query(Employer).filter(Employer.id == employer_id_int).first()
+        display_name = f"{employer.first_name}"
+        role = "employer"
         if not employer:
             raise HTTPException(status_code=404, detail="Employer not found")
         profile_picture_url = employer.profile_picture
@@ -147,6 +149,28 @@ def fetch_chat_user(user_id: int, db: Session = Depends(get_db)):
         "display_name": user.display_name,
         "profile_picture": user.profile_picture,
     }
+@router.delete("/chatuser/delete/{user_id}")
+def delete_chat_user(user_id: int, db: Session = Depends(get_db)):
+    user = _ensure_chat_user(db, user_id)
+    db.delete(user)
+    db.commit()
+    return {"detail": "User deleted successfully"}
+
+@router.delete("/chatuser/delete/employer/{employer_id}")
+def delete_chat_user_by_employer_id(employer_id: int, db: Session = Depends(get_db)):
+    users = db.query(ChatUser).filter(ChatUser.employer_id == employer_id).all()
+    for user in users:
+        db.delete(user)
+    db.commit()
+    return {"detail": "Users deleted successfully"}
+
+@router.delete("/chatuser/delete/employee/{employee_id}")
+def delete_chat_user_by_employee_id(employee_id: int, db: Session = Depends(get_db)):
+    users = db.query(ChatUser).filter(ChatUser.employee_id == employee_id).all()
+    for user in users:
+        db.delete(user)
+    db.commit()
+    return {"detail": "Users deleted successfully"}
 
 # =========================
 # Team (Employees + Employers)

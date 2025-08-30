@@ -45,3 +45,12 @@ def get_employees(
             "profile_picture": profile_url,
         })
     return result
+
+@router.delete("/team/delete/{employee_id}")
+def delete_employee(employee_id: int, db: Session = Depends(get_db)):
+    employee = db.query(models.Employee).filter(models.Employee.id == employee_id).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    db.delete(employee)
+    db.commit()
+    return {"detail": "Employee deleted successfully"}

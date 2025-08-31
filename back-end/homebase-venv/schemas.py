@@ -167,10 +167,9 @@ class PasswordChangeRequest(BaseModel):
     
 #-------------------------Message-----------------
 class ConversationCreateRequest(BaseModel):
-    role1: str
-    role2: str
     type: str  # 'direct' or 'group'
     participants: List[int]
+    roles: List[str]
     name: Optional[str] = None  # Only for group chats
     
 class ParticipantResponse(BaseModel):

@@ -161,11 +161,11 @@ def create_conversation(request: ConversationCreateRequest, db: Session = Depend
         db.add(conv)
         db.commit()
         db.refresh(conv)
-        if request.role1 == "employee":
+        if request.roles[0] == "employee":
             db.add(Participant(employee_id=participants[0], conversation_id=conv.id))
         else:
             db.add(Participant(employer_id=participants[0], conversation_id=conv.id))
-        if request.role2 == "employee":
+        if request.roles[1] == "employee":
             db.add(Participant(employee_id=participants[1], conversation_id=conv.id))
         else:
             db.add(Participant(employer_id=participants[1], conversation_id=conv.id))
@@ -184,7 +184,10 @@ def create_conversation(request: ConversationCreateRequest, db: Session = Depend
         db.commit()
         db.refresh(conv)
         for idx, pid in enumerate(participants):
-            db.add(Participant(employee_id=pid, conversation_id=conv.id, role="admin" if idx==0 else "member"))
+            if request.roles[idx] == "employee":
+                db.add(Participant(employee_id=pid, conversation_id=conv.id, role="admin" if idx==0 else "member"))
+            else:
+                db.add(Participant(employer_id=pid, conversation_id=conv.id, role="admin" if idx==0 else "member"))
         db.commit()
         db.refresh(conv)  # Refresh to load relationships
         return conv

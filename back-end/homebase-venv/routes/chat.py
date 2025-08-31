@@ -40,13 +40,13 @@ def _ensure_conversation(db: Session, conversation_id: int) -> Conversation:
 def _is_participant(db: Session, conversation_id: int, user_id: int) -> bool:
     return db.query(Participant).filter(
         Participant.conversation_id == conversation_id,
-        Participant.user_id == user_id
+        (Participant.employee_id == user_id) | (Participant.employer_id == user_id)
     ).first() is not None
 
 def _is_admin(db: Session, conversation_id: int, user_id: int) -> bool:
     p = db.query(Participant).filter(
         Participant.conversation_id == conversation_id,
-        Participant.user_id == user_id
+        (Participant.employee_id == user_id) | (Participant.employer_id == user_id)
     ).first()
     return bool(p and p.role == "admin")
 
@@ -62,13 +62,13 @@ def get_or_create_direct_conversation(db: Session, user_ids: List[int]) -> Conve
         .join(Participant, Participant.conversation_id == Conversation.id)
         .filter(Conversation.type == "direct")
         .group_by(Conversation.id)
-        .having(func.count(Participant.user_id) == 2)
+        .having(func.count(Participant.id) == 2)
         .all()
     )
 
     wanted = set(user_ids)
     for conv in existing:
-        part_ids: Set[int] = {p.user_id for p in conv.participants}
+        part_ids: Set[int] = {p.employee_id or p.employer_id for p in conv.participants if p.employee_id or p.employer_id}
         if part_ids == wanted:
             return conv
 
@@ -80,7 +80,7 @@ def get_or_create_direct_conversation(db: Session, user_ids: List[int]) -> Conve
 
     # Add the two participants (no admin concept for direct)
     for pid in user_ids:
-        db.add(Participant(user_id=pid, conversation_id=conv.id, role="member"))
+        db.add(Participant(employee_id=pid, conversation_id=conv.id, role="member"))
     db.commit()
     return conv
 
@@ -149,8 +149,6 @@ def get_connected_employees(
 def create_conversation(request: ConversationCreateRequest, db: Session = Depends(get_db)):
     type = request.type
     participants = request.participants
-    print("................................................")
-    print(participants)
 
     if type not in ["direct", "group"]:
         raise HTTPException(status_code=400, detail="Invalid type")
@@ -158,7 +156,8 @@ def create_conversation(request: ConversationCreateRequest, db: Session = Depend
     if type == "direct":
         if len(participants) != 2:
             raise HTTPException(status_code=400, detail="Direct chat needs 2 participants")
-        conv = Conversation(type="direct", name=None)
+        name = db.query(Employee).filter(Employee.id == participants[1]).first().first_name
+        conv = Conversation(type="direct", name=name)
         db.add(conv)
         db.commit()
         db.refresh(conv)
@@ -280,7 +279,7 @@ def remove_participant(
 
     participant = db.query(Participant).filter(
         Participant.conversation_id == conversation_id,
-        Participant.user_id == user_id
+        (Participant.employee_id == user_id) | (Participant.employer_id == user_id)
     ).first()
     if not participant:
         raise HTTPException(status_code=404, detail="User is not a participant")
@@ -301,7 +300,7 @@ def leave_group(
 
     participant = db.query(Participant).filter(
         Participant.conversation_id == conversation_id,
-        Participant.employee_id == user_id
+        (Participant.employee_id == user_id) | (Participant.employer_id == user_id)
     ).first()
     if not participant:
         raise HTTPException(status_code=404, detail="You are not in this conversation")
@@ -310,7 +309,7 @@ def leave_group(
     if participant.role == "admin":
         others = db.query(Participant).filter(
             Participant.conversation_id == conversation_id,
-            Participant.employee_id != user_id
+            ~((Participant.employee_id == user_id) | (Participant.employer_id == user_id))
         ).all()
         if others:
             # Promote the earliest joined member
@@ -337,7 +336,7 @@ def set_admin(
 
     participant = db.query(Participant).filter(
         Participant.conversation_id == conversation_id,
-        Participant.employee_id == target_user_id
+        (Participant.employee_id == target_user_id) | (Participant.employer_id == target_user_id)
     ).first()
     if not participant:
         raise HTTPException(status_code=404, detail="Target user is not a participant")
@@ -377,7 +376,6 @@ def send_message(
     file: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
-    # _ensure_chat_user removed. Use Employee/Employer directly.
     conv = _ensure_conversation(db, conversation_id)
 
     # Only participants can send messages

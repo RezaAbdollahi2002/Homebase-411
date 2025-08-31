@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_
 import schemas
 from database import get_db
-from models import ChatUser, Conversation, Participant, Message, Employee, Employer
+from models import Conversation, Participant, Message, Employee, Employer
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
@@ -29,11 +29,7 @@ active_connections = {}  # {conversation_id: List[WebSocket]}
 # =========================
 # Helper functions
 # =========================
-def _ensure_chat_user(db: Session, user_id: int) -> ChatUser:
-    user = db.query(ChatUser).filter(ChatUser.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Chat user not found")
-    return user
+## ChatUser helpers removed. Use Employee/Employer directly.
 
 def _ensure_conversation(db: Session, conversation_id: int) -> Conversation:
     conv = db.query(Conversation).filter(Conversation.id == conversation_id).first()
@@ -89,123 +85,61 @@ def get_or_create_direct_conversation(db: Session, user_ids: List[int]) -> Conve
     return conv
 
 # =========================
-# Chat Users
-# =========================
-@router.post("/chatuser")
-def create_chat_user(
-    employee_id: Optional[str] = Form(None),
-    employer_id: Optional[str] = Form(None),
-    db: Session = Depends(get_db)
-):
-    employee_id_int = int(employee_id) if employee_id and employee_id.strip() else None
-    employer_id_int = int(employer_id) if employer_id and employer_id.strip() else None
-
-    if not employee_id_int and not employer_id_int:
-        raise HTTPException(status_code=400, detail="Either employee_id or employer_id must be provided.")
-
-    profile_picture_url = None
-    if employee_id_int:
-        employee = db.query(Employee).filter(Employee.id == employee_id_int).first()
-        display_name = f"{employee.first_name}"
-        role = "employee"
-        if not employee:
-            raise HTTPException(status_code=404, detail="Employee not found")
-        profile_picture_url = employee.profile_picture
-    else:
-        employer = db.query(Employer).filter(Employer.id == employer_id_int).first()
-        display_name = f"{employer.first_name}"
-        role = "employer"
-        if not employer:
-            raise HTTPException(status_code=404, detail="Employer not found")
-        profile_picture_url = employer.profile_picture
-
-    chat_user = ChatUser(
-        role=role,
-        employee_id=employee_id_int,
-        employer_id=employer_id_int,
-        display_name=display_name,
-        profile_picture=profile_picture_url
-    )
-    db.add(chat_user)
-    db.commit()
-    db.refresh(chat_user)
-    return {
-        "id": chat_user.id,
-        "role": chat_user.role,
-        "employee_id": chat_user.employee_id,
-        "employer_id": chat_user.employer_id,
-        "display_name": chat_user.display_name,
-        "profile_picture": chat_user.profile_picture,
-    }
-
-@router.get("/chatuser/{user_id}")
-def fetch_chat_user(user_id: int, db: Session = Depends(get_db)):
-    user = _ensure_chat_user(db, user_id)
-    return {
-        "id": user.id,
-        "role": user.role,
-        "employee_id": user.employee_id,
-        "employer_id": user.employer_id,
-        "display_name": user.display_name,
-        "profile_picture": user.profile_picture,
-    }
-@router.delete("/chatuser/delete/{user_id}")
-def delete_chat_user(user_id: int, db: Session = Depends(get_db)):
-    user = _ensure_chat_user(db, user_id)
-    db.delete(user)
-    db.commit()
-    return {"detail": "User deleted successfully"}
-
-@router.delete("/chatuser/delete/employer/{employer_id}")
-def delete_chat_user_by_employer_id(employer_id: int, db: Session = Depends(get_db)):
-    users = db.query(ChatUser).filter(ChatUser.employer_id == employer_id).all()
-    for user in users:
-        db.delete(user)
-    db.commit()
-    return {"detail": "Users deleted successfully"}
-
-@router.delete("/chatuser/delete/employee/{employee_id}")
-def delete_chat_user_by_employee_id(employee_id: int, db: Session = Depends(get_db)):
-    users = db.query(ChatUser).filter(ChatUser.employee_id == employee_id).all()
-    for user in users:
-        db.delete(user)
-    db.commit()
-    return {"detail": "Users deleted successfully"}
-
-# =========================
 # Team (Employees + Employers)
 # =========================
 @router.get("/team")
-def get_connected_employees(employee_id: int, request: Request, db: Session = Depends(get_db)):
-    employees = db.query(Employee).join(Employer).filter(Employee.employer_id.isnot(None)).all()
+def get_connected_employees(
+    request: Request,
+    db: Session = Depends(get_db),
+    employee_id: Optional[int] = Query(None),
+    employer_id: Optional[int] = Query(None),
+):
+    if (employee_id and employer_id) or (not employee_id and not employer_id):
+        raise HTTPException(
+            status_code=400,
+            detail="You must provide either employee_id or employer_id, but not both."
+        )
+    if not employer_id:
+        flag = True
 
+    DEFAULT_PROFILE_PIC = "/static/profile_pictures/1_20240627.jpg"
     result = []
     added_employers = set()
-    DEFAULT_PROFILE_PIC = "/static/profile_pictures/1_20240627.jpg"
+
+    if employee_id:
+        employee = db.query(Employee).filter(Employee.id == employee_id).first()
+        if not employee:
+            raise HTTPException(status_code=404, detail="Employee not found")
+
+        employer_id = employee.employer_id
+        if not employer_id:
+            raise HTTPException(status_code=400, detail="This employee has no employer assigned")
+
+    employer = db.query(Employer).filter(Employer.id == employer_id).first()
+    if not employer:
+        raise HTTPException(status_code=404, detail="Employer not found")
+
+    employees = db.query(Employee).filter(Employee.employer_id == employer_id).all()
 
     for emp in employees:
-        if emp.id == employee_id:
+        if emp.id == employee_id:  # skip self if employee_id provided
             continue
-
-        # Employee
         emp_pic = str(request.base_url) + (emp.profile_picture or DEFAULT_PROFILE_PIC).lstrip("/")
         result.append({
             "id": emp.id,
             "role": "employee",
             "full_name": f"{emp.first_name} {emp.last_name}",
-            "profile_pic": emp_pic
+            "profile_pic": emp_pic,
         })
-
-        # Employer
-        if emp.employer.id not in added_employers:
-            emp_employer_pic = str(request.base_url) + (emp.employer.profile_picture or DEFAULT_PROFILE_PIC).lstrip("/")
-            result.append({
-                "id": emp.employer.id,
-                "role": "employer",
-                "full_name": f"{emp.employer.first_name} {emp.employer.last_name}",
-                "profile_pic": emp_employer_pic
-            })
-            added_employers.add(emp.employer.id)
+    print(employer_id)
+    if flag:
+        emp_employer_pic = str(request.base_url) + (employer.profile_picture or DEFAULT_PROFILE_PIC).lstrip("/")
+        result.append({
+            "id": employer.id,
+            "role": "employer",
+            "full_name": f"{employer.first_name} {employer.last_name}",
+            "profile_pic": emp_employer_pic,
+        })
 
     return {"team": result}
 # =========================
@@ -215,6 +149,8 @@ def get_connected_employees(employee_id: int, request: Request, db: Session = De
 def create_conversation(request: ConversationCreateRequest, db: Session = Depends(get_db)):
     type = request.type
     participants = request.participants
+    print("................................................")
+    print(participants)
 
     if type not in ["direct", "group"]:
         raise HTTPException(status_code=400, detail="Invalid type")
@@ -222,15 +158,20 @@ def create_conversation(request: ConversationCreateRequest, db: Session = Depend
     if type == "direct":
         if len(participants) != 2:
             raise HTTPException(status_code=400, detail="Direct chat needs 2 participants")
-        chatUser = _ensure_chat_user(db, participants[1])
-        name = chatUser.display_name
-        conv = Conversation(type="direct", name=name)
+        conv = Conversation(type="direct", name=None)
         db.add(conv)
         db.commit()
         db.refresh(conv)
-        for pid in participants:
-            db.add(Participant(user_id=pid, conversation_id=conv.id))
+        if request.role1 == "employee":
+            db.add(Participant(employee_id=participants[0], conversation_id=conv.id))
+        else:
+            db.add(Participant(employer_id=participants[0], conversation_id=conv.id))
+        if request.role2 == "employee":
+            db.add(Participant(employee_id=participants[1], conversation_id=conv.id))
+        else:
+            db.add(Participant(employer_id=participants[1], conversation_id=conv.id))
         db.commit()
+        db.refresh(conv)  # Refresh to load relationships
         return conv
 
     if type == "group":
@@ -244,8 +185,9 @@ def create_conversation(request: ConversationCreateRequest, db: Session = Depend
         db.commit()
         db.refresh(conv)
         for idx, pid in enumerate(participants):
-            db.add(Participant(user_id=pid, conversation_id=conv.id, role="admin" if idx==0 else "member"))
+            db.add(Participant(employee_id=pid, conversation_id=conv.id, role="admin" if idx==0 else "member"))
         db.commit()
+        db.refresh(conv)  # Refresh to load relationships
         return conv
 
 
@@ -254,8 +196,7 @@ def get_user_conversations(user_id: int, db: Session = Depends(get_db)):
     convs = (
         db.query(Conversation)
         .join(Participant)
-        .options(joinedload(Conversation.participants).joinedload(Participant.user))
-        .filter(Participant.user_id == user_id)
+        .filter(Participant.employee_id == user_id)
         .order_by(Conversation.last_message_at.desc())
         .all()
     )
@@ -273,7 +214,7 @@ def get_user_conversations(user_id: int, db: Session = Depends(get_db)):
 def list_participants(conversation_id: int, db: Session = Depends(get_db)):
     conv = _ensure_conversation(db, conversation_id)
     return [
-        {"user_id": p.user_id, "role": p.role, "joined_at": p.joined_at.isoformat()}
+        {"employee_id": p.employee_id, "employer_id": p.employer_id, "role": p.role, "joined_at": p.joined_at.isoformat()}
         for p in conv.participants
     ]
 
@@ -315,12 +256,11 @@ def add_participants(
     if not new_ids:
         raise HTTPException(status_code=400, detail="No participants provided")
 
-    existing_ids = {p.user_id for p in conv.participants}
+    existing_ids = {p.employee_id for p in conv.participants if p.employee_id is not None}
     for uid in new_ids:
         if uid in existing_ids:
             continue
-        _ensure_chat_user(db, uid)
-        db.add(Participant(user_id=uid, conversation_id=conv.id, role="member"))
+        db.add(Participant(employee_id=uid, conversation_id=conv.id, role="member"))
     db.commit()
 
     return {"id": conv.id, "added": new_ids}
@@ -361,7 +301,7 @@ def leave_group(
 
     participant = db.query(Participant).filter(
         Participant.conversation_id == conversation_id,
-        Participant.user_id == user_id
+        Participant.employee_id == user_id
     ).first()
     if not participant:
         raise HTTPException(status_code=404, detail="You are not in this conversation")
@@ -370,7 +310,7 @@ def leave_group(
     if participant.role == "admin":
         others = db.query(Participant).filter(
             Participant.conversation_id == conversation_id,
-            Participant.user_id != user_id
+            Participant.employee_id != user_id
         ).all()
         if others:
             # Promote the earliest joined member
@@ -397,7 +337,7 @@ def set_admin(
 
     participant = db.query(Participant).filter(
         Participant.conversation_id == conversation_id,
-        Participant.user_id == target_user_id
+        Participant.employee_id == target_user_id
     ).first()
     if not participant:
         raise HTTPException(status_code=404, detail="Target user is not a participant")
@@ -437,7 +377,7 @@ def send_message(
     file: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
-    _ensure_chat_user(db, sender_id)
+    # _ensure_chat_user removed. Use Employee/Employer directly.
     conv = _ensure_conversation(db, conversation_id)
 
     # Only participants can send messages

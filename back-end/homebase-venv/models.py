@@ -25,7 +25,6 @@ class Employee(Base):
     employer_id = Column(Integer, ForeignKey("employers.id"), nullable=False)
     employer = relationship("Employer", back_populates="employees")
     availabilities = relationship("EmployeeAvailability", back_populates="employee", cascade="all, delete-orphan")
-    chat_user = relationship("ChatUser", back_populates="employee", uselist=False)
 
 
 class Employer(Base):
@@ -44,7 +43,6 @@ class Employer(Base):
     company = relationship("Company", back_populates="employers")
 
     employees = relationship("Employee", back_populates="employer", cascade="all, delete-orphan")
-    chat_user = relationship("ChatUser", back_populates="employer", uselist=False)
 
 
 class Company(Base):
@@ -62,25 +60,6 @@ class Company(Base):
     employers = relationship("Employer", back_populates="company", cascade="all, delete-orphan")
 
 
-class ChatUser(Base):
-    __tablename__ = "chat_users"
-    __table_args__ = (
-        UniqueConstraint('employee_id', name='uq_chatuser_employee'),
-        UniqueConstraint('employer_id', name='uq_chatuser_employer'),
-    )
-
-    id = Column(Integer, primary_key=True, index=True)
-    role = Column(String(20), nullable=False)  # 'employee' or 'employer'
-    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=True, unique=True)
-    employer_id = Column(Integer, ForeignKey("employers.id"), nullable=True, unique=True)
-
-    display_name = Column(String(50), nullable=False)
-    profile_picture = Column(String(255), nullable=True)
-
-    messages = relationship("Message", back_populates="sender", cascade="all, delete-orphan")
-    employee = relationship("Employee", back_populates="chat_user")
-    employer = relationship("Employer", back_populates="chat_user")
-    participants = relationship("Participant", back_populates="user", cascade="all, delete-orphan")
 
 
 class Conversation(Base):
@@ -99,15 +78,20 @@ class Conversation(Base):
 
 class Participant(Base):
     __tablename__ = "participants"
-    __table_args__ = (Index('ix_user_conversation', 'user_id', 'conversation_id', unique=True),)
+    __table_args__ = (
+        Index('ix_employee_conversation', 'employee_id', 'conversation_id'),
+        Index('ix_employer_conversation', 'employer_id', 'conversation_id'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("chat_users.id", ondelete="CASCADE"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=True)
+    employer_id = Column(Integer, ForeignKey("employers.id", ondelete="CASCADE"), nullable=True)
     conversation_id = Column(Integer, ForeignKey("conversations.id"), nullable=False)
     role = Column(String(20), default="member")  # 'member' or 'admin'
     joined_at = Column(DateTime, default=datetime.utcnow)
 
-    user = relationship("ChatUser")
+    employee = relationship("Employee")
+    employer = relationship("Employer")
     conversation = relationship("Conversation", back_populates="participants")
 
 
@@ -117,7 +101,8 @@ class Message(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     conversation_id = Column(Integer, ForeignKey("conversations.id"), nullable=False)
-    sender_id = Column(Integer, ForeignKey("chat_users.id", ondelete="CASCADE"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=True)
+    employer_id = Column(Integer, ForeignKey("employers.id", ondelete="CASCADE"), nullable=True)
 
     text = Column(String, nullable=True)
     attachment_url = Column(String, nullable=True)
@@ -125,7 +110,8 @@ class Message(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     conversation = relationship("Conversation", back_populates="messages")
-    sender = relationship("ChatUser", back_populates="messages")
+    employee = relationship("Employee")
+    employer = relationship("Employer")
 
 # ---------------------- ShiftSchedule ------------
 
@@ -234,6 +220,3 @@ class ShiftTradeRequest(Base):
     shift = relationship("Shift", back_populates="trade_requests")
     proposer = relationship("Employee", foreign_keys=[proposer_id])
     target_employee = relationship("Employee", foreign_keys=[target_employee_id])
-
-# class Announcements(Base):
-#     __tablename__ 

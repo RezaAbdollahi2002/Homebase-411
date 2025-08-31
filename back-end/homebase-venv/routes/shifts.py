@@ -4,8 +4,7 @@ from sqlalchemy.orm import Session,joinedload
 from datetime import datetime,timedelta
 from database import get_db
 from models import (
-    Shift, ShiftStatus, ShiftCoverRequest, ShiftTradeRequest,
-    ChatUser, Conversation, Participant, Message,Employee, Employer
+    Shift, ShiftStatus, ShiftCoverRequest, ShiftTradeRequest, Conversation, Participant, Message,Employee, Employer
 )
 import schemas
 

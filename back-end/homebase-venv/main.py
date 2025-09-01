@@ -8,9 +8,10 @@ from dotenv import load_dotenv
 from routes.employee import router as employee_router
 from routes.employer import router as employer_router
 from routes.company import router as company_router
+from routes.availabilities import router as availabilities_router
 from routes.signin import router as signin_router
 from routes.chat import router as chat_router
-from availabilities import router as availabilities_router
+# from availabilities import router as availabilities_router
 from routers.email_router import router as email_router, start_cleanup_task
 from routers.sms_router import router as sms_router
 import models
@@ -55,6 +56,7 @@ app.include_router(sms_router)
 app.include_router(shifts_router)
 app.include_router(check_router)
 app.include_router(team_router)
+app.include_router(availabilities_router)
 
 app.include_router(availabilities_router)  # Fixed typo
 

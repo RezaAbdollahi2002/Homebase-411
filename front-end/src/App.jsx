@@ -1,10 +1,13 @@
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
+import { useState } from 'react';
 import {
   Register, AccountRecovery, SignInPhoneNumber, Singup,
   OwnerSignup, OwnerMotivation, BusinessInfoOwnerSignUp, CreateOwnerAccount,
   SignupEmployee, UserSignup, UserContactInfoSignup, UserAccountinfo,
   UserCheckingAccountInfo, EmployeeDashboard, FinalizeOwnerAccount, EmployeeSettings,
-  Team, Message, EmployerDashboard, EmployerProfile,EmployerSettings,EmployeeSchedule, EmployerSchedule
+  Team, Message, EmployerDashboard, EmployerProfile,EmployerSettings,EmployeeSchedule, EmployerSchedule,
+  EmployerNavbar,EmployeeAvailabilities,
+  Navbar
 } from './components';
 import HomePage from './pages/HomePage';
 import Profile from './components/employeeSettings/Profile';
@@ -18,6 +21,9 @@ import EmployerNotifications from './components/EmployerNotifications'
 
 
 const App = () => {
+  const [message, setMessage] = useState(false);
+
+  const handleMessageState = (data) => setMessage(data);
   return (
     <BrowserRouter>
       <Routes>
@@ -34,7 +40,13 @@ const App = () => {
         <Route path='/onboarding/sign-up/business-info' element={<BusinessInfoOwnerSignUp />} />
         <Route path='/onboarding/sign-up/business-info/create-owner-account' element={<CreateOwnerAccount />} />
         <Route path='/onboarding/sign-up/business-info/finalize-create-owner-account' element={<FinalizeOwnerAccount />} />
-        <Route path='/onboarding/sign-up/employer-dashborad' element={<EmployerDashboard />} />
+        <Route path='/onboarding/sign-up/employer-dashborad' element={
+          <>
+            <EmployerNavbar messageState={handleMessageState} />
+            <EmployerDashboard message={message} />
+          </>
+        }
+      />
         <Route path='/onboarding/sign-up/employer-schedule' element={<EmployerSchedule />} />
 
         {/* Employee Routes */}
@@ -42,10 +54,17 @@ const App = () => {
         <Route path='/onboarding/sign-up/user-contact' element={<UserContactInfoSignup />} />
         <Route path='/onboarding/sign-up/user-accountuser' element={<UserAccountinfo />} />
         <Route path='/onboarding/sign-up/user-account-edit-checking' element={<UserCheckingAccountInfo />} />
-        <Route path='/onboarding/sign-up/employee-dashboard' element={<EmployeeDashboard />} />
+        <Route path='/onboarding/sign-up/employee-dashboard' element={
+          <>
+            <Navbar messageState={handleMessageState}/>
+            <EmployeeDashboard message={message} setMessage={setMessage} />
+            
+          </>
+        }
+           />
 
         {/* Settings Layout with nested pages */}
-        <Route path='/onboarding/sign-up/employee-settings' element={<EmployeeSettings />}>
+        <Route path='/onboarding/sign-up/employee-settings' element={<EmployeeSettings  message={message} handleMessageState={handleMessageState} setMessage={setMessage}/>}>
           <Route index element={<Profile />} /> {/* default */}
           <Route path='employee-settings-profile' element={<Profile />} />
           <Route path='employee-settings-locations' element={<LocationsAndPINs />} />
@@ -59,9 +78,11 @@ const App = () => {
           <Route path='employer-settings-notifications' element={<EmployerNotifications />} />
           <Route path='employer-settings-passwordandsecurity' element={<EmployerasswordAndSecurity />} />
         </Route>
-        <Route path='/onborading/sign-up/team' element={<Team />}/>
-        <Route path='/onborading/sign-up/message' element={<Message />}/>
-        <Route path='/onborading/Schedule' element={<EmployeeSchedule />}/>
+        <Route path='/onboarding/sign-up/team' element={<Team message={message} handleMessageState={handleMessageState} setMessage={setMessage}/>}/>
+        <Route path='/onboarding/sign-up/message' element={<Message />}/>
+        <Route path='/onboarding/Schedule' element={<EmployeeSchedule message={message} handleMessageState={handleMessageState} setMessage={setMessage}/>}/>
+        <Route path='/onboarding/My_Availabilities' element={<EmployeeAvailabilities message={message} handleMessageState={handleMessageState} setMessage={setMessage}/>}/>
+        
       </Routes>
       
     </BrowserRouter>

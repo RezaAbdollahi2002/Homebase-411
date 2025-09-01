@@ -1,4 +1,6 @@
+from pydantic import BaseModel, Field
 from datetime import datetime, time, date
+from typing import Optional
 from sqlalchemy import (
     Column, Integer, String, ForeignKey, Time, DateTime, Date, UniqueConstraint,
     Index, Enum, Boolean
@@ -6,6 +8,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from database import Base
 import enum
+from sqlalchemy.types import Enum as SQLEnum
 
 # ---------------------- Chat & Users ----------------------
 
@@ -112,6 +115,41 @@ class Message(Base):
     conversation = relationship("Conversation", back_populates="messages")
     employee = relationship("Employee")
     employer = relationship("Employer")
+<<<<<<< HEAD
+=======
+    
+# ---------------------- Announcements ------------
+class Announcement(Base):
+    __tablename__ = "announcements"
+    __table_args__ = (
+        Index("ix_announcement_employer_created", "employer_id", "created_at"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    employer_id = Column(Integer, ForeignKey("employers.id"), nullable=False)
+
+    title = Column(String(100), nullable=False)
+    message = Column(String, nullable=False)
+    attachment_url = Column(String, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)  # optional expiry
+
+    employer = relationship("Employer", backref="announcements")
+
+class AnnouncementRecipient(Base):
+    __tablename__ = "announcement_recipients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    announcement_id = Column(Integer, ForeignKey("announcements.id", ondelete="CASCADE"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
+
+    read = Column(Boolean, default=False)
+    read_at = Column(DateTime, nullable=True)
+
+    announcement = relationship("Announcement", backref="recipients")
+    employee = relationship("Employee")
+>>>>>>> 096c644 (new)
 
 # ---------------------- ShiftSchedule ------------
 
@@ -154,10 +192,18 @@ class Shift(Base):
 
 # --------------- Availabilities ----------
 
+# Enum (to keep consistency with SQLAlchemy)
+class AvailabilityType(str, enum.Enum):
+    available = "available"
+    unavailable = "unavailable"
+    
+
+
 class AvailabilityStatus(str, enum.Enum):
     pending = "pending"
     approved = "approved"
     rejected = "rejected"
+
 
 class EmployeeAvailability(Base):
     __tablename__ = "employee_availabilities"
@@ -166,22 +212,18 @@ class EmployeeAvailability(Base):
     )
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(50), nullable=True)  # label like "Vacation" (optional)
     employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
-    #is_time_off = Column(Boolean, default=False)  # true = employee is not available
 
-    # Range
+    type = Column(SQLEnum(AvailabilityType, name="availability_type"), default=AvailabilityType.available)
+    name = Column(String(50), nullable=True)
+
     start_date = Column(Date, nullable=False)
-    end_date = Column(Date, nullable=True)  # if null, applies to start_date only
-
-    # Optional recurring pattern
-    day_of_week = Column(Integer, nullable=True)  # 0 = Monday, 6 = Sunday
-
-    start_time = Column(Time, nullable=False)
-    end_time = Column(Time, nullable=False)
+    end_date = Column(Date, nullable=True)
+    day_of_week = Column(Integer, nullable=True)
+    start_time = Column(Time, nullable=True)
+    end_time = Column(Time, nullable=True)
     description = Column(String(200), nullable=True)
-
-    status = Column(Enum(AvailabilityStatus), default=AvailabilityStatus.pending)
+    status = Column(String, default="pending")
 
     employee = relationship("Employee", back_populates="availabilities")
 

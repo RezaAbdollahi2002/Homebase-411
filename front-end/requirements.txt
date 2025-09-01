@@ -17,3 +17,5 @@ react-hook-form @hookform/resolvers yup react-icons --legacy-peer-deps
 dayjs --legacy-peer-deps
 --legacy-peer-deps
 @fullcalendar/react @fullcalendar/core @fullcalendar/daygrid @fullcalendar/timegrid @fullcalendar/interaction --force
+
+npm install --legacy-peer-deps

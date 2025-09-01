@@ -68,10 +68,15 @@ def edit_shift(
 
 
 @router.get("/shifts/employer")
-def get_shifts(employer_id:int, db: Session = Depends(get_db)):
-    shifts = db.query(Shift).options(
-        joinedload(Shift.employee)  # <-- load employee relationship
-    ).filter(Shift.employer_id == employer_id).order_by(Shift.start_time).all()
+def get_shifts(employer_id:int, published: bool, db: Session = Depends(get_db)):
+    if published:
+        shifts = db.query(Shift).options(
+            joinedload(Shift.employee) 
+        ).filter(Shift.employer_id == employer_id, Shift.publish_status == "published").order_by(Shift.start_time).all()
+    else:
+         shifts = db.query(Shift).options(
+            joinedload(Shift.employee) 
+        ).filter(Shift.employer_id == employer_id, Shift.publish_status == "unpublished").order_by(Shift.start_time).all()
 
     # Convert to dicts
     result = []
@@ -97,12 +102,13 @@ def get_shifts(employer_id:int, db: Session = Depends(get_db)):
         })
     return result
 
+
 @router.get("/shifts/employee")
 def get_shifts(employee_id:int, db: Session = Depends(get_db)):
     employer_id = db.query(Employee).filter(Employee.id == employee_id ).first().employer_id
     shifts = db.query(Shift).options(
         joinedload(Shift.employee)  # <-- load employee relationship
-    ).filter(Shift.employer_id == employer_id).order_by(Shift.start_time).all()
+    ).filter(Shift.employer_id == employer_id, Shift.publish_status == 'published').order_by(Shift.start_time).all()
 
     # Convert to dicts
     result = []
@@ -246,35 +252,35 @@ def update_shift_status(shift_id: int, status: ShiftStatus, db: Session = Depend
 
 # -------------------- Shift with Chat -------------------- #
 
-def send_shift_message(db: Session, shift: Shift, sender_id: int, text: str):
-    employee_user = db.query(ChatUser).filter(ChatUser.employee_id == shift.employee_id).first()
-    employer_user = db.query(ChatUser).filter(ChatUser.employer_id == shift.employer_id).first()
+# def send_shift_message(db: Session, shift: Shift, sender_id: int, text: str):
+#     employee_user = db.query(ChatUser).filter(ChatUser.employee_id == shift.employee_id).first()
+#     employer_user = db.query(ChatUser).filter(ChatUser.employer_id == shift.employer_id).first()
 
-    conversation = (
-        db.query(Conversation)
-        .filter(Conversation.type == "direct")
-        .join(Participant)
-        .filter(Participant.user_id.in_([employee_user.id, employer_user.id]))
-        .first()
-    )
-    if not conversation:
-        conversation = Conversation(type="direct", created_at=datetime.utcnow())
-        db.add(conversation)
-        db.commit()
-        db.refresh(conversation)
-        db.add_all([
-            Participant(user_id=employee_user.id, conversation_id=conversation.id),
-            Participant(user_id=employer_user.id, conversation_id=conversation.id)
-        ])
-        db.commit()
+#     conversation = (
+#         db.query(Conversation)
+#         .filter(Conversation.type == "direct")
+#         .join(Participant)
+#         .filter(Participant.user_id.in_([employee_user.id, employer_user.id]))
+#         .first()
+#     )
+#     if not conversation:
+#         conversation = Conversation(type="direct", created_at=datetime.utcnow())
+#         db.add(conversation)
+#         db.commit()
+#         db.refresh(conversation)
+#         db.add_all([
+#             Participant(user_id=employee_user.id, conversation_id=conversation.id),
+#             Participant(user_id=employer_user.id, conversation_id=conversation.id)
+#         ])
+#         db.commit()
 
-    message = Message(
-        conversation_id=conversation.id,
-        sender_id=sender_id,
-        text=text
-    )
-    db.add(message)
-    db.commit()
+#     message = Message(
+#         conversation_id=conversation.id,
+#         sender_id=sender_id,
+#         text=text
+#     )
+#     db.add(message)
+#     db.commit()
 
 @router.post("/shifts/with-chat")
 def create_shift_chat(employee_id: int, employer_id: int, title: str, start_time: datetime, end_time: datetime, db: Session = Depends(get_db)):

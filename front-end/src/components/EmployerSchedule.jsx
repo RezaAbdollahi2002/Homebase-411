@@ -5,6 +5,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import { Typewriter } from 'react-simple-typewriter';
 
 const EmployerSchedule = () => {
   const [shifts, setShifts] = useState([]);
@@ -30,6 +31,7 @@ const EmployerSchedule = () => {
   const [editTitle, setEditTitle] = useState("");
   const [editStartTime, setEditStartTime] = useState("");
   const [editEndTime, setEditEndTime] = useState("");
+  const [published, setPublished] = useState(true);
   
  
   
@@ -41,7 +43,7 @@ const EmployerSchedule = () => {
 
   useEffect(() => {
     // Fetch shifts with employee info
-    axios.get("http://localhost:8000/shifts/employer", {params: {"employer_id": employerId}})
+    axios.get("http://localhost:8000/shifts/employer", {params: {"employer_id": employerId,"published": published }})
       .then(res => { 
         setShifts(res.data); 
         setLoading(false); 
@@ -68,9 +70,11 @@ const EmployerSchedule = () => {
   const events = shifts.map((shift) => ({
     id: shift.id,
     title: `${shift.role} - ${shift.title} @ ${shift.location || "No location"}`,
+    role: shift.role,
+    location : shift.location,
     start: new Date(shift.start_time),
     end: new Date(shift.end_time),
-    backgroundColor: shift.role === "Supervisor" ? "yellow" : "#202EB2",
+    backgroundColor: shift.role === "Supervisor" ? "yellow" : "#6e2a3c",
     extendedProps: {
       employeeId: shift.employee_id,
       status: shift.status,
@@ -186,9 +190,12 @@ const EmployerSchedule = () => {
         <ul className="flex gap-x-4 pl-4 py-2">
           <li className="hover:scale-105 hover:font-bold duration-75 cursor-pointer" onClick={() => setAddShift(!addShift)}>Add Shift</li>
           <li className="hover:scale-105 hover:font-bold duration-75" onClick={() => setIsEditShift(!isEditShift)}>Edit Shift</li>
-          <li className="hover:scale-105 hover:font-bold duration-75" onClick={() => setIsRemoveShift(!isRemoveShift)}>Remove Shift</li>
+          {/* <li className="hover:scale-105 hover:font-bold duration-75" onClick={() => setIsRemoveShift(!isRemoveShift)}>Remove Shift</li> */}
+          <li className="hover:scale-105 hover:font-bold duration-75" onClick={() => setPublished(true)}>Published Shifts</li>
+          <li className="hover:scale-105 hover:font-bold duration-75" onClick={() => setPublished(false)}>Unpublished Shifts</li>
         </ul>
       </div> 
+
 
 
 
@@ -325,7 +332,7 @@ const EmployerSchedule = () => {
 
 
       {/* Remove Shift */}
-      {isRemoveShift && (
+      {/* {isRemoveShift && (
         <div className="px-4 py-2 border border-gray-400 shadow-2xl max-w-[500px] mx-auto flex flex-col gap-y-3 text-black mt-6 bg-white">
           <h3 className="font-semibold text-lg">Remove Shift</h3>
           {shifts.length > 0 ? (
@@ -341,45 +348,135 @@ const EmployerSchedule = () => {
             <p className="text-gray-500">No shifts available</p>
           )}
         </div>
-      )}
+      )} */}
 
       {/* FullCalendar */}
-      <div className="p-4">
-        <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            initialView="timeGridWeek"
-            events={events}
-            height="auto"
-            
-            eventContent={(arg) => {
-              const { role, title, location, profilePicture, employeeName } = arg.event.extendedProps;
+      {
+        published && (
+          <>
+          <h1 className="text-center my-5 text-lg md:text-2xl xl:text:3xl font-bold text-[#292424]">  
+            <Typewriter 
+            words ={['Published Schedule']}
+            loop={true}
+            cursor
+            cursorStyle="|"
+            typeSpeed={70}
+            deleteSpeed={50}
+            delaySpeed={1000}
+          />
+          </h1>
+          
+            <div className="p-4">
+              <FullCalendar
+                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                  initialView="timeGridWeek"
+                  events={events}
+                  height="auto"
+                  headerToolbar={{
+                  left: "prev,next today",
+                  center: "title",
+                  right: "dayGridMonth,timeGridWeek,timeGridDay"
+                }}
+                  eventContent={(arg) => {
+                    const { role, title, location, profilePicture, employeeName } = arg.event.extendedProps;
 
-              return (
-                <div className="flex items-start gap-2 px-1 py-1 rounded-lg bg-blue-200 text-black text-xs font-medium">
-                  {/* Profile Picture or Initial */}
-                  {profilePicture ? (
-                    <img
-                      src={`http://localhost:8000${profilePicture}`}
-                      alt={employeeName}
-                      className="w-6 h-6 rounded-full object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                      {employeeName ? employeeName[0] : "?"}
-                    </div>
-                  )}
+                    return (
+                      <div className="lg:flex items-start gap-2 px-1 py-3 rounded-lg  text-white text-xs md:text-sm font-semibold text-center justify-center w-full h-full  border shadow-2xl hover:scale-106 duration-200 hover:bg-[#b62f52]">
+                        {/* Profile Picture or Initial */}
+                        {profilePicture ? (
+                          <>
+                            <div className="flex gap-5 justify-center lg:justify-start">
+                                   <img
+                                    src={`http://localhost:8000${profilePicture}`}
+                                    alt={employeeName}
+                                    className="w-6 h-6  md:w-10 md:h-10  rounded-full object-cover flex-shrink-0"
+                                  />
+                                  
+                            </div>
+                          </>
+                        ) : (
+                          <div className="w-2 h-2 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                            {employeeName ? employeeName[0] : "?"}
+                          </div>
+                        )}
 
-                  {/* Shift Info */}
-                  <div className="flex flex-col break-words">
-                    <span className="font-bold">{employeeName || "Unknown"}</span>
-                    <span>{role} - {title}</span>
-                    {location && <span className="text-xs text-gray-700">{location}</span>}
-                  </div>
-                </div>
-              );
-            }}
-            />
-      </div>
+                        {/* Shift Info */}
+                        <div className="grid grid-cols-1 gap-y-2 md:ml-2 text-center break-words text-xs md:text-sm ">
+                          <span className="font-bold mt-2">{employeeName || "employee"}</span>
+                          <span className="hidden md:block">{role} - {title}</span>
+                          {location && <span className="text-xs md:text-sm">{location}</span>}
+                        </div>
+                      </div>
+                    );
+                  }}
+                  />
+            </div>
+          </>
+        )
+      }
+      {
+        !published && (
+          <>
+          <h1 className="text-center my-5 text-lg md:text-2xl xl:text:3xl font-bold text-[#292424]">  
+            <Typewriter 
+            words ={['Unpublished Schedule']}
+            loop={true}
+            cursor
+            cursorStyle="|"
+            typeSpeed={70}
+            deleteSpeed={50}
+            delaySpeed={1000}
+          />
+          </h1>
+          
+            <div className="p-4">
+              <FullCalendar
+                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                  initialView="timeGridWeek"
+                  events={events}
+                  height="auto"
+                  headerToolbar={{
+                  left: "prev,next today",
+                  center: "title",
+                  right: "dayGridMonth,timeGridWeek,timeGridDay"
+                }}
+                  eventContent={(arg) => {
+                    const { role, title, location, profilePicture, employeeName } = arg.event.extendedProps;
+
+                    return (
+                      <div className="lg:flex items-start gap-2 px-1 py-3 rounded-lg  text-white text-xs md:text-sm font-semibold text-center justify-center w-full h-full  border shadow-2xl hover:scale-106 duration-200 hover:bg-[#b62f52]">
+                        {/* Profile Picture or Initial */}
+                        {profilePicture ? (
+                          <>
+                            <div className="flex gap-5 justify-center lg:justify-start">
+                                   <img
+                                    src={`http://localhost:8000${profilePicture}`}
+                                    alt={employeeName}
+                                    className="w-6 h-6  md:w-10 md:h-10  rounded-full object-cover flex-shrink-0"
+                                  />
+                                  
+                            </div>
+                          </>
+                        ) : (
+                          <div className="w-2 h-2 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                            {employeeName ? employeeName[0] : "?"}
+                          </div>
+                        )}
+
+                        {/* Shift Info */}
+                        <div className="grid grid-cols-1 gap-y-2 md:ml-2 text-center break-words text-xs md:text-sm ">
+                          <span className="font-bold mt-2">{employeeName || "employee"}</span>
+                          <span className="hidden md:block">{role} - {title}</span>
+                          {location && <span className="text-xs md:text-sm">{location}</span>}
+                        </div>
+                      </div>
+                    );
+                  }}
+                  />
+            </div>
+          </>
+        )
+      }
     </div>
   );
 };

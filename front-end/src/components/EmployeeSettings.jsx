@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import Navbar from './Navbar';
+import Message from './Message';
 
-const EmployeeSettingsLayout = () => {
+const EmployeeSettingsLayout = ({message, handleMessageState, setMessage}) => {
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -18,7 +19,7 @@ const EmployeeSettingsLayout = () => {
 
   return (
     <>
-      <Navbar />
+      <Navbar messageState={handleMessageState}/>
       <div className="h-screen lg:flex">
         {/* Sidebar for large screens */}
         <div className="hidden lg:block  bg-gray-100 p-4 border-r ">
@@ -82,6 +83,13 @@ const EmployeeSettingsLayout = () => {
         {/* Main Content */}
         <div className="flex-1 py-6 px-4 overflow-auto">
           <Outlet /> {/* This is where the selected page will load */}
+        </div>
+
+        {/* Message System */}
+        <div className={`absolute top-10 h-screen right-0 min-w-[350px] bg-white shadow-xl z-50 p-4 overflow-auto transform transition-transform duration-1000 ease-in-out ${
+          message ? "translate-x-0" : "translate-x-full"
+        }`}>
+          <Message onClose={() => setMessage(false)}/>
         </div>
       </div>
     </>

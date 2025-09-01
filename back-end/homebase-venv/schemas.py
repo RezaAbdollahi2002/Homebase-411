@@ -1,3 +1,4 @@
+from pydantic import BaseModel, Field
 from enum import Enum
 from pydantic import BaseModel, EmailStr, constr, ConfigDict
 from typing import Optional, List
@@ -168,6 +169,7 @@ class PasswordChangeRequest(BaseModel):
 #-------------------------Message-----------------
 class ConversationCreateRequest(BaseModel):
     type: str  # 'direct' or 'group'
+    roles: List[str]
     participants: List[int]
     roles: List[str]
     name: Optional[str] = None  # Only for group chats
@@ -261,3 +263,56 @@ class ShiftEmployeeDashboard(BaseModel):
     description: str
     start_time: datetime
     end_time: datetime
+    
+    
+# ----------- Availabilities -------------
+
+# -------- Base Schema --------
+class AvailabilityBase(BaseModel):
+    employee_id: int = Field(..., description="The employee this availability belongs to")
+    type: models.AvailabilityType = Field(default=models.AvailabilityType.available, description="Type of availability")
+    name: Optional[str] = Field(None, max_length=50, description="Label (Vacation, Class Schedule, etc.)")
+
+    # Date range
+    start_date: date = Field(..., description="Start date of availability")
+    end_date: Optional[date] = Field(None, description="End date of availability (null if one-day)")
+
+    # Recurrence
+    day_of_week: Optional[int] = Field(
+        None, ge=0, le=6, description="Optional recurring day of week (0=Monday, 6=Sunday)"
+    )
+
+    # Time range
+    start_time: Optional[time] = Field(None, description="Start time (null = all day)")
+    end_time: Optional[time] = Field(None, description="End time (null = all day)")
+
+    description: Optional[str] = Field(None, max_length=200, description="Extra notes")
+
+
+# -------- Create Schema --------
+class AvailabilityCreate(AvailabilityBase):
+    """Schema for creating new availability"""
+    pass
+
+
+# -------- Update Schema --------
+class AvailabilityUpdate(BaseModel):
+    """Schema for updating an availability"""
+    type: Optional[models.AvailabilityType]
+    name: Optional[str]
+    start_date: Optional[date]
+    end_date: Optional[date]
+    day_of_week: Optional[int]
+    start_time: Optional[time]
+    end_time: Optional[time]
+    description: Optional[str]
+    status: Optional[AvailabilityStatus]
+
+
+# -------- Response Schema --------
+class AvailabilityResponse(AvailabilityBase):
+    """Schema for returning availability with DB fields"""
+    id: int
+    status: AvailabilityStatus = AvailabilityStatus.pending
+
+    model_config = dict(from_attributes=True)  # ✅ replaces orm_mode in Pydantic v2

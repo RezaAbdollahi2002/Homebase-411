@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { IoCloseSharp } from "react-icons/io5";
+import { MdOutlineArrowBackIosNew } from 'react-icons/md';
 
 const BASE_URL = "/api/chat/";
 
-const Message = () => {
+const Message = ({onClose }) => {
   const [team, setTeam] = useState([]);
   const [search, setSearch] = useState("");
   const [newMessage, setNewMessage] = useState(false);
@@ -15,6 +17,7 @@ const Message = () => {
   const [messages, setMessages] = useState([]);
   const [file, setFile] = useState(null);
   const [messageText, setMessageText] = useState("");
+  const [role, setRole] = useState("");
 
   const ws = useRef(null);
   const messagesEndRef = useRef(null);
@@ -22,36 +25,22 @@ const Message = () => {
   const employeeId = Number(localStorage.getItem("employee_id"));
   const employerId = Number(localStorage.getItem("employer_id") || "");
   const userId = employeeId || employerId;
+useEffect(() => {
+  if (employeeId) setRole("employee");
+  else if (employerId) setRole("employer");
+}, [employeeId, employerId]);
 
   // Fetch team
   useEffect(() => {
     axios
-      .get(`${BASE_URL}team`, { params: { employee_id: employeeId } })
+      .get(`${BASE_URL}team`, { params: { employee_id: userId } })
       .then((res) => {
         if (res.data && res.data.team) setTeam(res.data.team);
       })
       .catch(() => setTeam([]));
-  }, [employeeId]);
+  }, [userId]);
 
-  // Create ChatUser if not exists
-  useEffect(() => {
-    const createChatUser = async () => {
-      try {
-        const payload = new URLSearchParams();
-        if (employeeId) payload.append("employee_id", employeeId);
-        if (employerId) payload.append("employer_id", employerId);
-        payload.append("role", employeeId ? "employee" : "employer");
-        payload.append("display_name", "Display Name");
-
-        await axios.post(`${BASE_URL}chatuser`, payload);
-      } catch (e) {
-        console.error("Chat user creation failed:", e);
-      }
-    };
-    if (employeeId || employerId) createChatUser();
-  }, [employeeId, employerId]);
-
-  // Fetch user's conversations
+  
   const fetchConversations = async () => {
     const res = await axios.get(`${BASE_URL}conversations/${userId}`);
     setConversations(res.data);
@@ -140,43 +129,49 @@ const Message = () => {
     }
   };
 
-  // Create conversation
   const createConversation = async () => {
-    if (
-      (chatType === "direct" && selectedMembers.length !== 1) ||
-      (chatType === "group" && selectedMembers.length < 2)
-    ) {
-      alert("Select enough members!");
-      return;
-    }
-    if (chatType === "group" && !groupName.trim()) {
-      alert("Group name required!");
-      return;
-    }
+  if (
+    (chatType === "direct" && selectedMembers.length !== 1) ||
+    (chatType === "group" && selectedMembers.length < 2)
+  ) {
+    alert("Select enough members!");
+    return;
+  }
+  if (chatType === "group" && !groupName.trim()) {
+    alert("Group name required!");
+    return;
+  }
 
-    const participants =
-      chatType === "direct"
-        ? [userId, selectedMembers[0].id]
-        : [userId, ...selectedMembers.map((m) => m.id)];
+  try {
+    const participants = [userId, ...selectedMembers.map(u => u.id)];
+    const roles = [role, ...selectedMembers.map(u => u.role)];
 
     const payload = {
       type: chatType,
+      roles,        // must match backend
       participants,
-      name: chatType === "group" ? groupName : undefined,
+      name: chatType === "group" ? groupName.trim() : selectedMembers[0]?.full_name || "Direct Chat"
     };
 
     await axios.post(`${BASE_URL}conversation`, payload);
-    fetchConversations();
+    await fetchConversations();
+
     setSelectedMembers([]);
     setGroupName("");
     setNewMessage(false);
-  };
+  } catch (err) {
+    console.error("Conversation creation failed:", err);
+    alert("Failed to create conversation. Check console for details.");
+  }
+};
+
+
+
+
 
   // Helper for conversation name
   const getConversationName = (conv) => {
-    if (conv.type === "group") return conv.name;
-    const other = conv.participants?.find((p) => p.id !== userId);
-    return other?.full_name || "Direct Chat";
+    conv.name
   };
 
   const filteredTeam = team.filter((m) =>
@@ -184,28 +179,29 @@ const Message = () => {
   );
 
   return (
-    <div className="flex flex-col h-[100%]  bg-gray-50">
+    <div className="flex flex-col   h-[100%] max-w-[350px]  bg-gray-50 ">
       {/* Conversation List / New Message */}
       {!activeConversation && (
         <div className="bg-white  flex flex-col h-[90vh] overflow-hidden">
           {!newMessage && (
             <>
-              <button
-                className="bg-purple-600 text-white px-2 py-1 rounded mb-3"
-                onClick={() => setNewMessage(true)}
-              >
-                New Message
-              </button>
-              <h2 className="font-bold mb-2">Conversations</h2>
-              <ul className="flex-1 overflow-y-auto">
+            <div className="flex  justify-between">
+              <button className="text-xs md:text-sm" onClick={onClose}>
+               <IoCloseSharp  className="bg-white w-4 h-4 text-purple-700"/>
+            </button>
+              
+            </div>
+            
+              <h2 className="font-bold mb-2 text-center mt-2 text-lg lg:text-xl">Conversations</h2>
+              <ul className="flex-1 overflow-y-auto ">
                 {conversations.map((conv) => (
                   <li
                     key={conv.id}
-                    className="cursor-pointer p-2 border-b hover:bg-gray-100 rounded"
+                    className="cursor-pointer bg-[#542B6F] p-2 text-white border border-gray-400 mb-2 shadow-2xl bg- hover:bg-gray-100 hover:text-black rounded font-bold"
                     onClick={() => openConversation(conv)}
                   >
                     <div className="flex justify-between">
-                      <span>{getConversationName(conv)}</span>
+                      <span>{conv.name}</span>
                       <span className="text-xs text-gray-400">
                         {new Date(conv.last_message_at).toLocaleTimeString()}
                       </span>
@@ -213,6 +209,12 @@ const Message = () => {
                   </li>
                 ))}
               </ul>
+              <button
+                className="bg-purple-600 text-white px-2 py-1 rounded mb-3 overflow-auto hover:scale-102 duration-75 mt-2"
+                onClick={() => setNewMessage(true)}
+              >
+                New Message
+              </button>
             </>
           )}
 
@@ -245,7 +247,7 @@ const Message = () => {
                   className="border px-2 py-1 rounded mb-2"
                 />
               )}
-              <ul className="flex-1 overflow-y-auto border rounded p-1 mb-2">
+              <ul className="flex-1 overflow-y-auto border border-gray-300 shadow-lg rounded p-1 mb-2">
                 {filteredTeam.map((member) => (
                   <li
                     key={`${member.id}-${member.role}`}
@@ -285,18 +287,24 @@ const Message = () => {
 
       {/* Chat View */}
       {activeConversation && (
-        <div className="bg-white p-3 rounded shadow-md flex flex-col h-[90vh]">
-          <button
-            className="mb-2 text-blue-600"
-            onClick={() => setActiveConversation(null)}
-          >
-            ← Back
-          </button>
-          <h2 className="font-bold mb-3 text-lg">
-            {activeConversation.type === "group"
-              ? activeConversation.name
-              : getConversationName(activeConversation)}
-          </h2>
+        <div className="bg-white p-3 flex flex-col h-[90vh]">
+          
+          <div className="flex items-center justify-between w-full relative">
+            {/* Back Button */}
+            <button
+              className="absolute left-0 flex items-center p-2"
+              onClick={() => setActiveConversation(null)}
+            >
+              <MdOutlineArrowBackIosNew className="w-4 h-4 text-gray-500" />
+            </button>
+
+            {/* Title */}
+            <h2 className="font-bold text-lg text-center w-full">
+              {activeConversation.name}
+            </h2>
+          </div>
+         
+          
 
           <div className="flex-1 overflow-y-auto flex flex-col space-y-2 mb-2 pr-2">
             {messages.map((msg) => (

@@ -502,3 +502,4 @@ async def websocket_endpoint(websocket: WebSocket, conversation_id: int):
         active_connections[conversation_id].remove(websocket)
         if not active_connections[conversation_id]:
             del active_connections[conversation_id]
+

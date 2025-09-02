@@ -257,3 +257,4 @@ class ShiftTradeRequest(Base):
     shift = relationship("Shift", back_populates="trade_requests")
     proposer = relationship("Employee", foreign_keys=[proposer_id])
     target_employee = relationship("Employee", foreign_keys=[target_employee_id])
+    

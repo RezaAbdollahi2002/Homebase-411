@@ -100,12 +100,11 @@ class Participant(Base):
 
 class Message(Base):
     __tablename__ = "messages"
-    __table_args__ = (Index('ix_conversation_created', 'conversation_id', 'created_at'),)
+    __table_args__ = (Index('ix_conversation_created', 'conversation_id', 'created_at', 'sender_id'),)
 
     id = Column(Integer, primary_key=True, index=True)
     conversation_id = Column(Integer, ForeignKey("conversations.id"), nullable=False)
-    employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=True)
-    employer_id = Column(Integer, ForeignKey("employers.id", ondelete="CASCADE"), nullable=True)
+    sender_id = Column(Integer, ForeignKey("participants.id"), nullable=False)
 
     text = Column(String, nullable=True)
     attachment_url = Column(String, nullable=True)
@@ -113,10 +112,7 @@ class Message(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     conversation = relationship("Conversation", back_populates="messages")
-    employee = relationship("Employee")
-    employer = relationship("Employer")
-<<<<<<< HEAD
-=======
+    sender = relationship("Participant", foreign_keys=[sender_id])
     
 # ---------------------- Announcements ------------
 class Announcement(Base):
@@ -149,7 +145,6 @@ class AnnouncementRecipient(Base):
 
     announcement = relationship("Announcement", backref="recipients")
     employee = relationship("Employee")
->>>>>>> 096c644 (new)
 
 # ---------------------- ShiftSchedule ------------
 

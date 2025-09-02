@@ -43,6 +43,12 @@ def _is_participant(db: Session, conversation_id: int, user_id: int) -> bool:
         (Participant.employee_id == user_id) | (Participant.employer_id == user_id)
     ).first() is not None
 
+def _get_participant(db: Session, conversation_id: int, user_id: int) -> Optional[Participant]:
+    return db.query(Participant).filter(
+        Participant.conversation_id == conversation_id,
+        (Participant.employee_id == user_id) | (Participant.employer_id == user_id)
+    ).first()
+
 def _is_admin(db: Session, conversation_id: int, user_id: int) -> bool:
     p = db.query(Participant).filter(
         Participant.conversation_id == conversation_id,
@@ -395,7 +401,8 @@ def send_message(
             shutil.copyfileobj(file.file, buffer)
         attachment_url = f"/uploads/chat/{unique_filename}"
         attachment_type = "audio" if ext in [".mp3", ".wav", ".m4a", ".ogg"] else "image"
-
+    sender_id = _get_participant(db, conversation_id, sender_id).id
+    
     msg = Message(
         conversation_id=conversation_id,
         sender_id=sender_id,

@@ -10,6 +10,7 @@ from fastapi import (
     APIRouter, Depends, UploadFile, File, Form, WebSocket,
     WebSocketDisconnect, HTTPException, Query, Request
 )
+from fastapi.responses import FileResponse
 from starlette import status
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_
@@ -355,6 +356,16 @@ def set_admin(
     return {"id": conv.id, "user_id": target_user_id, "role": participant.role}
 
 # =========================
+# File serving endpoint
+# =========================
+@router.get("/uploads/chat/{filename}")
+def serve_chat_file(filename: str):
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(file_path)
+
+# =========================
 # Messages
 # =========================
 @router.get("/messages/{conversation_id}")
@@ -378,6 +389,7 @@ def get_conversation_messages(conversation_id: int, db: Session = Depends(get_db
     ]
 
 @router.post("/message")
+@router.post("/message")
 def send_message(
     conversation_id: int = Form(...),
     sender_id: int = Form(...),
@@ -393,16 +405,33 @@ def send_message(
 
     attachment_url = None
     attachment_type = None
+
     if file:
+        # Always get extension from filename
         ext = os.path.splitext(file.filename)[1].lower()
+
+        # Create unique safe filename
         unique_filename = f"{uuid.uuid4()}{ext}"
         filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
-        with open(filepath, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+
+        try:
+            with open(filepath, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+        finally:
+            file.file.close()
+
+        # Store relative path for serving later
         attachment_url = f"/uploads/chat/{unique_filename}"
-        attachment_type = "audio" if ext in [".mp3", ".wav", ".m4a", ".ogg"] else "image"
+        if ext in [".mp3", ".wav", ".m4a", ".ogg"]:
+            attachment_type = "audio"
+        elif ext in [".jpg", ".jpeg", ".png", ".gif", ".webp"]:
+            attachment_type = "image"
+        else:
+            attachment_type = "file"
+
+    # Map sender to participant id
     sender_id = _get_participant(db, conversation_id, sender_id).id
-    
+
     msg = Message(
         conversation_id=conversation_id,
         sender_id=sender_id,
@@ -417,7 +446,7 @@ def send_message(
     db.commit()
     db.refresh(msg)
 
-    # WS notify
+    # Notify WebSocket listeners
     if conversation_id in active_connections:
         payload = {
             "type": "message",

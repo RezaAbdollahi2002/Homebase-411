@@ -40,9 +40,9 @@ models.Base.metadata.create_all(bind=engine)
 
 # Static / Uploads
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOADS_DIR = os.path.join(BASE_DIR, "uploads")
-os.makedirs(UPLOADS_DIR, exist_ok=True)  # Ensure uploads directory exists
-app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Include API routers

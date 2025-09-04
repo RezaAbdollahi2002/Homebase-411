@@ -359,11 +359,14 @@ def set_admin(
 # File serving endpoint
 # =========================
 @router.get("/uploads/chat/{filename}")
-def serve_chat_file(filename: str):
-    file_path = os.path.join(UPLOAD_FOLDER, filename)
-    if not os.path.exists(file_path):
+def serve_profile_file(filename: str):
+    print("************************************")
+    parent_dir = os.path.dirname(os.path.dirname(__file__))
+    profile_pics_path = os.path.join(parent_dir, "static", "profile_pictures", filename)   
+    print(profile_pics_path)
+    if not os.path.exists(profile_pics_path):
         raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(file_path)
+    return FileResponse(profile_pics_path)
 
 # =========================
 # Messages
@@ -388,7 +391,6 @@ def get_conversation_messages(conversation_id: int, db: Session = Depends(get_db
         for m in msgs
     ]
 
-@router.post("/message")
 @router.post("/message")
 def send_message(
     conversation_id: int = Form(...),

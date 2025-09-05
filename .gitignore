@@ -1,0 +1,18 @@
+# Ignore Python caches
+__pycache__/
+*.pyc
+
+# Ignore SQLite databases
+*.sqlite3
+back-end/homebase-venv/Homebase_DB.db
+
+# Ignore Python virtual environments
+venv/
+back-end/homebase-venv/
+
+# Ignore Node modules
+front-end/node_modules/
+
+# Ignore uploaded files
+back-end/homebase-venv/uploads/
+back-end/homebase-venv/routes/uploads/

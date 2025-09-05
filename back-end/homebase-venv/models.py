@@ -128,8 +128,8 @@ class Announcement(Base):
     message = Column(String, nullable=False)
     attachment_url = Column(String, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    expires_at = Column(DateTime, nullable=True)  # optional expiry
+    created_at = Column(Date, default=datetime.utcnow)
+    expires_at = Column(Date, nullable=True)  # optional expiry
 
     employer = relationship("Employer", backref="announcements")
 

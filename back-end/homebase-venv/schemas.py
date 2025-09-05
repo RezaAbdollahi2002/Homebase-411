@@ -315,4 +315,24 @@ class AvailabilityResponse(AvailabilityBase):
     id: int
     status: AvailabilityStatus = AvailabilityStatus.pending
 
-    model_config = dict(from_attributes=True)  # ✅ replaces orm_mode in Pydantic v2
+    model_config = dict(from_attributes=True) 
+
+
+# ----------------------- Announcements -----------------
+class AnnouncementCreate(BaseModel):
+    employer_id: int
+    title: str
+    message: str
+    attachment_url: Optional[str] = None
+    expires_at: Optional[date] = None
+
+class AnnouncementOut(BaseModel):
+    id: int
+    employer_id: int
+    title: str
+    message: str
+    attachment_url: Optional[str] = None
+    created_at: date
+    expires_at: Optional[date] = None
+
+    model_config = dict(from_attributes=True)

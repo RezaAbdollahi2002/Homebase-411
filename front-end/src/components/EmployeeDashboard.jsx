@@ -5,6 +5,7 @@ import Message from "./Message";
 import EmployeeShiftsDashboard from "./EmployeeShiftsDashboard";
 import EmployeeShiftWeeklyReviw from './EmployeeShiftWeeklyReviw';
 import Navbar from "./Navbar";
+import EmployeeAnnouncement from "./EmployeeAnnouncement";
 
 const EmployeeDashboard = ({ message, setMessage  }) => {
   const [employeeName, setEmployeeName] = useState("Employee");
@@ -27,13 +28,17 @@ const EmployeeDashboard = ({ message, setMessage  }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4">
         {/* Left panel */}
-        <div className="col-span-1 md:col-span-4 lg:col-span-2 bg-white rounded-xl p-4 shadow overflow-auto max-h-[90vh]">
+        <div className="col-span-1 md:col-span-4 lg:col-span-2 bg-[#d6d0de] rounded-xl p-4 shadow overflow-auto max-h-[90vh]">
+          <h2 className="text-xl font-bold mb-3 mx-4">Announcements</h2>
+          <div className="px-6">
+               < EmployeeAnnouncement />
+          </div>
           <EmployeeShiftsDashboard employee_id={employeeId} />
         </div>
 
         {/* Right panel */}
-        <div className="col-span-1 md:col-span-4 lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 relative">
-          <div className={`bg-white rounded-xl p-4 shadow ${message ? "col-span-3" : "col-span-3"}`}>
+        <div className="col-span-1 md:col-span-4 lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4  relative">
+          <div className={`bg-[#5d466b] rounded-xl p-4 shadow ${message ? "col-span-3" : "col-span-3"}`}>
             <EmployeeShiftWeeklyReviw employeeId={employeeId}/>
           </div>
         </div>

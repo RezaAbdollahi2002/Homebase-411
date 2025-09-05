@@ -17,11 +17,26 @@ const EmployeeSchedule = ({ message, handleMessageState, setMessage }) => {
 
   useEffect(() => {
     axios
-      .get(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/shifts/employee`, {
-        params: { employee_id: employeeId },
-      })
+      .get(
+        `${
+          import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+        }/shifts/employee`,
+        {
+          params: { employee_id: employeeId },
+        }
+      )
       .then((res) => {
-        setShifts(res.data);
+        // Normalize API response
+        const normalized = res.data.map((shift) => ({
+          ...shift,
+          employee: {
+            ...shift.employee,
+            firstName: shift.employee?.first_name || "",
+            lastName: shift.employee?.last_name || "",
+            profilePicture: shift.employee?.profile_picture || null,
+          },
+        }));
+        setShifts(normalized);
         setLoading(false);
       })
       .catch((err) => {
@@ -32,7 +47,7 @@ const EmployeeSchedule = ({ message, handleMessageState, setMessage }) => {
 
   const events = shifts.map((shift) => ({
     id: shift.id,
-    title: `${shift.role} - ${shift.title}`, // fallback for FullCalendar
+    title: `${shift.role} - ${shift.title}`,
     start: new Date(shift.start_time),
     end: new Date(shift.end_time),
     backgroundColor: shift.role === "Supervisor" ? "#5E7B94" : "#5E141E",
@@ -40,14 +55,13 @@ const EmployeeSchedule = ({ message, handleMessageState, setMessage }) => {
       role: shift.role,
       shift: shift.title,
       location: shift.location || "No specified",
-      firstName: shift.employee.first_name || "",
-      lastNmae: shift.employee.last_name || "",
+      firstName: shift.employee?.firstName,
+      lastName: shift.employee?.lastName,
       employeeId: shift.employee_id,
       status: shift.status,
       publishStatus: shift.publish_status,
       description: shift.description,
-      profilePicture: shift.employee?.profile_picture || null,
-      employeeName: shift.employee?.first_name || "",
+      profilePicture: shift.employee?.profilePicture,
     },
   }));
 
@@ -59,48 +73,90 @@ const EmployeeSchedule = ({ message, handleMessageState, setMessage }) => {
       {/* Navbar */}
       <Navbar messageState={handleMessageState} />
 
-      {/* Calendar */}
-      <div className="p-4">
-        <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView="timeGridWeek"
-          events={events}
-          height="auto"
-          eventContent={(arg) => {
-            const { role, shift, location, profilePicture, employeeName, firstName } = arg.event.extendedProps;
+      {/* Calendar + List */}
+      <div className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Left panel: list of shifts */}
+        <div className="md:col-span-1 space-y-2">
+          {shifts.map((shift, index) => {
+            const fullName = `${shift.employee?.firstName} ${shift.employee?.lastName}`.trim();
+
             return (
-              <div className="grid gap-y-2 items-center gap-1 px-1 py-3 rounded-lg  text-white text-xs font-medium overflow-hidden whitespace-nowrap">
-                {profilePicture ? (
-                  <>
-                  <div className="flex gap-2 text-center align-top md:justify-center">
-                       <img
-                        src={`http://localhost:8000${profilePicture}`}
-                        alt={employeeName}
-                        className="w-6 h-6 md:w-10 md:h-10 rounded-full object-cover flex-shrink-0"
-                      />
-                      <span className="truncated text-xs md:text-lg font-bold md:mt-2">{firstName}</span>
-                  </div>
-                  </>
-                  
+              <div
+                key={shift.id || index}
+                className="border border-gray-300 rounded-md flex items-center gap-3 px-2 py-1 text-gray-800"
+              >
+                {shift.employee?.profilePicture ? (
+                  <img
+                    src={`http://localhost:8000${shift.employee.profilePicture}`}
+                    alt={fullName}
+                    className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                  />
                 ) : (
                   <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                    {employeeName ? employeeName[0] : "?"}
+                    {shift.employee?.firstName ? shift.employee.firstName[0] : "?"}
                   </div>
                 )}
-                <div className="flex flex-col gap-4 md:text-center">
-                    
-                    <span className="truncate text-xs">{role}</span>
-                    <span className="truncate text-xs">{shift}</span>
-                    <span className="truncate text-xs">{location}</span>
-                </div>
-                
+                <div className="truncate">{fullName || "Unnamed Employee"}</div>
               </div>
             );
-          }}
-        />
-      </div>
+          })}
+        </div>
 
-      
+        {/* Right panel: calendar */}
+        <div className="md:col-span-3">
+          <FullCalendar
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            initialView="timeGridWeek"
+            events={events}
+            height="auto"
+            eventContent={(arg) => {
+              const {
+                role,
+                shift,
+                location,
+                profilePicture,
+                firstName,
+                lastName,
+              } = arg.event.extendedProps;
+
+              const fullName = `${firstName || ""} ${lastName || ""}`.trim();
+
+              return (
+                <div className="flex items-center gap-2 px-1 py-1 rounded-lg text-white text-xs font-medium overflow-hidden">
+                  {/* Avatar + name */}
+                  <div className="flex items-center gap-1 min-w-[80px]">
+                    {profilePicture ? (
+                      <img
+                        src={`http://localhost:8000${profilePicture}`}
+                        alt={fullName}
+                        className="w-5 h-5 md:w-6 md:h-6 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                        {firstName ? firstName[0] : "?"}
+                      </div>
+                    )}
+                    <span className="truncate font-bold text-xs md:text-sm">
+                      {fullName}
+                    </span>
+                  </div>
+
+                  {/* Shift details */}
+                  <div className="flex flex-col text-left">
+                    <span className="truncate text-xs">{role}</span>
+                    <span className="truncate text-xs hidden lg:block">
+                      {shift}
+                    </span>
+                    <span className="truncate text-xs hidden lg:block">
+                      {location}
+                    </span>
+                  </div>
+                </div>
+              );
+            }}
+          />
+        </div>
+      </div>
 
       {/* Chat Drawer */}
       <div

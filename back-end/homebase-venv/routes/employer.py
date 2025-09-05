@@ -189,3 +189,12 @@ async def update_employer_profile_picture(
     db.refresh(employer)
     
     return {"profile_picture": employer.profile_picture}
+
+@router.get("/employers/name")
+def get_employer_name(employer_id: int, db: Session = Depends(get_db)):
+    employer = db.query(models.Employer).filter(models.Employer.id == employer_id).first()
+    
+    if not employer:
+        raise HTTPException(status_code=404, detail="Employer not found")
+    
+    return {"first_name": employer.first_name}

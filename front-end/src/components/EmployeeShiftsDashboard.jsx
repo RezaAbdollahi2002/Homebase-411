@@ -34,31 +34,16 @@ const EmployeeShiftsDashboard = ({ employee_id }) => {
 
   return (
     <div className="px-4 py-2 flex flex-col space-y-4">
-        <h1 className="text-lg lg:text-xl mb-2">Announcement</h1>
-        <div className="p-4 rounded-lg shadow-xl bg-white w-full max-w-full"> 
-            
-            {
-                    Announcements.map((a,index) => (
-                        <>
-                            <div
-                            key={index}
-                                className="px-3 py-2 border border-gray-300 rounded-md shadow-2xl bg-white hover:scale-105 duration-300"
-                            >
-
-                            </div>
-                        </>
-                    ))
-            }
-        </div>
-        <h1 className="md:text-xl text-lg mt-10">My Shifts</h1>
+        
+        <h1 className="md:text-xl text-lg mt-10 font-bold">My Shifts</h1>
       {loading && <p>Loading...</p>}
 
       {!loading && error && <p className="text-red-500">{error}</p>}
 
       {!loading && !error && shifts.length === 0 && (
-        <p className="text-gray-500">No shifts available</p>
+        <p className="text-black-500 font-semibold ">No shifts available</p>
       )}
-    <div className="p-4 rounded-lg shadow-xl bg-white w-full max-w-full flex flex-col gap-y-4 border-gray-400 ">
+    <div className="p-4 rounded-lg shadow-xl  w-full max-w-full flex flex-col gap-y-4 border-gray-400 bg-[#a099a5]">
         {!loading &&
         !error &&
         shifts.map((shift,index) => (
@@ -66,7 +51,7 @@ const EmployeeShiftsDashboard = ({ employee_id }) => {
                 
                 <div
                 key={index}
-                className="px-3 py-2 border border-gray-300 rounded-md shadow-2xl bg-white hover:scale-105 duration-300"
+                className="px-3 py-2 border border-gray-300 rounded-md shadow-2xl bg-white hover:scale-105 duration-300 "
             >
                 <h3 className="font-bold text-black">{shift.role}</h3>
                 <p className="text-gray-600">

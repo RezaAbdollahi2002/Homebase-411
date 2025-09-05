@@ -32,6 +32,8 @@ const EmployerSchedule = () => {
   const [editStartTime, setEditStartTime] = useState("");
   const [editEndTime, setEditEndTime] = useState("");
   const [published, setPublished] = useState(true);
+  const [menu, setMenu] = useState({ visible: false, x: 0, y: 0, shiftId: null });
+  const [moreDetail, setMoreDetail] = useState(false);
   
  
   
@@ -66,6 +68,19 @@ const EmployerSchedule = () => {
     member.first_name.toLowerCase().includes(search.toLowerCase())
   );
   
+ const handleContextMenu = (e, shiftId) => {
+  e.preventDefault();
+  setMenu({
+    visible: true,
+    x: e.pageX,
+    y: e.pageY,
+    shiftId,
+  });
+};
+
+const handleClickOutside = () => {
+  if (menu.visible) setMenu({ ...menu, visible: false });
+};
 
   const events = shifts.map((shift) => ({
     id: shift.id,
@@ -381,15 +396,32 @@ const EmployerSchedule = () => {
                     const { role, title, location, profilePicture, employeeName } = arg.event.extendedProps;
 
                     return (
-                      <div className="lg:flex items-start gap-2 px-1 py-3 rounded-lg  text-white text-xs md:text-sm font-semibold text-center justify-center w-full h-full  border shadow-2xl hover:scale-106 duration-200 hover:bg-[#b62f52]">
+                      <div 
+                      onContextMenu={handleContextMenu}
+                      onClick={
+                        () => {setMoreDetail(!moreDetail)}
+
+                      } 
+                      className="lg:flex items-start gap-2 px-1 py-3 rounded-lg  text-white text-xs md:text-sm font-semibold text-center justify-center
+                       w-full h-full  border shadow-2xl hover:scale-106 duration-200 hover:bg-[#b62f52] ">
                         {/* Profile Picture or Initial */}
                         {profilePicture ? (
                           <>
-                            <div className="flex gap-5 justify-center lg:justify-start">
+                          {
+                              moreDetail && (
+                                <>
+                                  <div className="hidden lg:block flex bg-white text-black font-bold  mt-4 px-2 py-1 ">
+                                      <span className="hidden lg:block text-xs">{role} - {title}</span>
+                                      {location && <span className="text-xs hidden lg:block md:text-sm">{location}</span>}
+                                  </div>
+                                </>
+                              )
+                          }
+                            <div className="flex gap-5 lg:justify-start lg:justify-start hidden lg:block">
                                    <img
                                     src={`http://localhost:8000${profilePicture}`}
                                     alt={employeeName}
-                                    className="w-6 h-6  md:w-10 md:h-10  rounded-full object-cover flex-shrink-0"
+                                    className="w-5 h-5  lg:w-5 lg:h-5  rounded-full object-cover flex-shrink-0"
                                   />
                                   
                             </div>
@@ -399,12 +431,26 @@ const EmployerSchedule = () => {
                             {employeeName ? employeeName[0] : "?"}
                           </div>
                         )}
+                        {menu.visible && (
+                          <ul
+                            className="absolute bg-white border rounded shadow-md z-50"
+                            style={{ top: menu.y, left: menu.x }}
+                          >
+                            <li
+                              onClick={() => {
+                                handleRemoveShift(menu.shiftId);
+                                handleClickOutside();
+                              }}
+                              className="px-4 py-2 hover:bg-red-100 text-red-600 cursor-pointer"
+                            >
+                              Remove Shift
+                            </li>
+                          </ul>
+                        )}
 
                         {/* Shift Info */}
-                        <div className="grid grid-cols-1 gap-y-2 md:ml-2 text-center break-words text-xs md:text-sm ">
-                          <span className="font-bold mt-2">{employeeName || "employee"}</span>
-                          <span className="hidden md:block">{role} - {title}</span>
-                          {location && <span className="text-xs md:text-sm">{location}</span>}
+                        <div className="grid grid-cols-1 -mt-2 md:ml-1 text-center break-words text-xs md:text-sm ">
+                          <span className="font-bold mt-2 text-xs ">{employeeName || "employee"}</span>
                         </div>
                       </div>
                     );

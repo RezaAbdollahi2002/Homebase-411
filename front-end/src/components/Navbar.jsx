@@ -26,7 +26,7 @@ const Navbar = ({ messageState }) => {
       {/* Navbar */}
       <div className="grid grid-cols-2 px-2 bg-[#35175C] w-full py-2 items-center justify-between text-white font-semibold">
         {/* Left side */}
-        <div className="hidden md:flex md:gap-3 items-center">
+        <div className="hidden md:flex md:gap-3 items-center ">
           <Link
             to={"/onboarding/sign-up/employee-dashboard"}
             className="text-white mx-2 font-bold text-sm cursor-pointer hover:scale-105 duration:300"
@@ -61,7 +61,7 @@ const Navbar = ({ messageState }) => {
 
           <button
             onClick={messageStateFunction}
-            className="text-purple-200 text-xs bg-transparent border-none cursor-pointer hover:scale-105 duration:300"
+            className="text-purple-200 text-xs bg-transparent border-none cursor-pointer hover:scale-105 duration:300 "
           >
             Message
           </button>

@@ -18,6 +18,7 @@ const Message = ({onClose }) => {
   const [file, setFile] = useState(null);
   const [messageText, setMessageText] = useState("");
   const [role, setRole] = useState("");
+  const [showImage, setShowImage] = useState(false);
 
   const ws = useRef(null);
   const messagesEndRef = useRef(null);
@@ -71,6 +72,7 @@ useEffect(() => {
 
     const res = await axios.get(`${BASE_URL}messages/${conv.id}`);
     setMessages(res.data);
+    console.log("message" + JSON.stringify(res.data,null,2));
 
     ws.current = new WebSocket(`ws://localhost:8000/chat/ws/${conv.id}`);
 
@@ -104,7 +106,7 @@ useEffect(() => {
         id: res.data.message_id,
         sender_id: userId,
         text: text,
-        attachment_url: file ? URL.createObjectURL(file) : null,
+        attachment_url: file ?  URL.createObjectURL(file) : null,
         attachment_type: file ? "file" : null,
         created_at: new Date().toISOString(),
       },
@@ -316,7 +318,7 @@ useEffect(() => {
               >
                 {msg.sender_id !== userId && (
                   <img
-                    src={msg.sender_profile || "/default-avatar.png"}
+                    src={`${msg.sender_profile || "/default-avatar.png"}`}
                     alt="avatar"
                     className="w-8 h-8 rounded-full mr-2"
                   />
@@ -330,14 +332,15 @@ useEffect(() => {
                 >
                   {msg.text}
                   {msg.attachment_url && (
-                    <a
-                      href={msg.attachment_url}
+                     <a
+                       href={msg.attachment_url}
                       target="_blank"
-                      rel="noreferrer"
-                      className="block text-xs text-blue-700 mt-1"
+                       rel="noreferrer"
+                       className="block text-xs text-blue-700 mt-1"
                     >
-                      📎 File
-                    </a>
+                       📎 File
+                     </a>
+
                   )}
                 </div>
               </div>

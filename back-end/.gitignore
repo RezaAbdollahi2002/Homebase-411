@@ -3,4 +3,4 @@ __pycache__/
 *.sqlite3
 routes/__pycache__/*
 routers/__pycache__/*
-homebase-venv/Homebase_DB.db
+# homebase-venv/Homebase_DB.db

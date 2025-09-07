@@ -4,7 +4,7 @@ __pycache__/
 
 # Ignore SQLite databases
 *.sqlite3
-back-end/homebase-venv/Homebase_DB.db
+# back-end/homebase-venv/Homebase_DB.db
 
 # Ignore Node modules
 front-end/node_modules/

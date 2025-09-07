@@ -9,6 +9,6 @@ back-end/homebase-venv/Homebase_DB.db
 # Ignore Node modules
 front-end/node_modules/
 
-# Ignore uploaded files
-back-end/homebase-venv/uploads/
-back-end/homebase-venv/routes/uploads/
+# # Ignore uploaded files
+# back-end/homebase-venv/uploads/
+# back-end/homebase-venv/routes/uploads/

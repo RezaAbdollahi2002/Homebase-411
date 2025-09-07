@@ -1,7 +1,6 @@
 __pycache__/
 *.pyc
 *.sqlite3
-venv/
 routes/__pycache__/*
 routers/__pycache__/*
 homebase-venv/Homebase_DB.db

@@ -6,10 +6,6 @@ __pycache__/
 *.sqlite3
 back-end/homebase-venv/Homebase_DB.db
 
-# Ignore Python virtual environments
-venv/
-back-end/homebase-venv/
-
 # Ignore Node modules
 front-end/node_modules/
 

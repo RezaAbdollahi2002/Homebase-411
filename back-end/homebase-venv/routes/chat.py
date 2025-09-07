@@ -22,6 +22,7 @@ router = APIRouter(prefix="/chat", tags=["Chat"])
 
 # --------- File uploads ----------
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads", "chat")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # --------- WS in-memory store ----------
@@ -423,7 +424,7 @@ def send_message(
             file.file.close()
 
         # Store relative path for serving later
-        attachment_url = f"/uploads/chat/{unique_filename}"
+        attachment_url = f"/routes/uploads/chat/{unique_filename}"
         if ext in [".mp3", ".wav", ".m4a", ".ogg"]:
             attachment_type = "audio"
         elif ext in [".jpg", ".jpeg", ".png", ".gif", ".webp"]:

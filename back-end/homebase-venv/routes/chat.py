@@ -163,10 +163,7 @@ def create_conversation(request: ConversationCreateRequest, db: Session = Depend
     if type == "direct":
         if len(participants) != 2:
             raise HTTPException(status_code=400, detail="Direct chat needs 2 participants")
-        if request.roles == "employer":
-            name = db.query(Employer).filter(Employer.id == participants[1]).first().first_name + "," + db.query(Employer).filter(Employer.id == participants[0]).first().first_name
-        elif request.roles == "employee":
-            name = db.query(Employee).filter(Employee.id == participants[1]).first().first_name + "," + db.query(Employee).filter(Employee.id == participants[0]).first().first_name
+        name = db.query(Employee).filter(Employee.id == participants[1]).first().first_name + " and " + db.query(Employee).filter(Employee.id == participants[0]).first().first_name
         conv = Conversation(type="direct", name=name)
         db.add(conv)
         db.commit()
@@ -205,22 +202,13 @@ def create_conversation(request: ConversationCreateRequest, db: Session = Depend
 
 @router.get("/conversations/{user_id}")
 def get_user_conversations(user_id: int, db: Session = Depends(get_db)):
-    if not db.query(Employer).filter(Employer.id == user_id).first():
-        convs = (
-        db.query(Conversation)
-        .join(Participant)
-        .filter(Participant.employee_id == user_id)
-        .order_by(Conversation.last_message_at.desc())
-        .all()
-        )
-    else:
-        convs = (
-        db.query(Conversation)
-        .join(Participant)
-        .filter(Participant.employer_id == user_id)
-        .order_by(Conversation.last_message_at.desc())
-        .all()
-        )
+    convs = (
+    db.query(Conversation)
+    .join(Participant)
+    .filter(Participant.employee_id == user_id)
+    .order_by(Conversation.last_message_at.desc())
+    .all()
+    )
     return [
         {
             "id": c.id,

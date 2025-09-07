@@ -132,7 +132,7 @@ def get_connected_employees(
     for emp in employees:
         if emp.id == employee_id:  # skip self if employee_id provided
             continue
-        emp_pic = str(request.base_url) + (emp.profile_picture or DEFAULT_PROFILE_PIC).lstrip("/")
+        emp_pic = str (emp.profile_picture or DEFAULT_PROFILE_PIC).lstrip("/")
         result.append({
             "id": emp.id,
             "role": "employee",
@@ -141,7 +141,7 @@ def get_connected_employees(
         })
     print(employer_id)
     if flag:
-        emp_employer_pic = str(request.base_url) + (employer.profile_picture or DEFAULT_PROFILE_PIC).lstrip("/")
+        emp_employer_pic = str(employer.profile_picture or DEFAULT_PROFILE_PIC).lstrip("/")
         result.append({
             "id": employer.id,
             "role": "employer",
@@ -424,7 +424,7 @@ def send_message(
             file.file.close()
 
         # Store relative path for serving later
-        attachment_url = f"/routes/uploads/chat/{unique_filename}"
+        attachment_url = f"/uploads/chat/{unique_filename}"
         if ext in [".mp3", ".wav", ".m4a", ".ogg"]:
             attachment_type = "audio"
         elif ext in [".jpg", ".jpeg", ".png", ".gif", ".webp"]:

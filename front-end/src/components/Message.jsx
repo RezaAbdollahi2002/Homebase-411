@@ -5,7 +5,7 @@ import { MdOutlineArrowBackIosNew } from 'react-icons/md';
 
 const BASE_URL = "/api/chat/";
 
-const Message = ({onClose }) => {
+const Message = ({ onClose }) => {
   const [team, setTeam] = useState([]);
   const [search, setSearch] = useState("");
   const [newMessage, setNewMessage] = useState(false);
@@ -26,10 +26,10 @@ const Message = ({onClose }) => {
   const employeeId = Number(localStorage.getItem("employee_id"));
   const employerId = Number(localStorage.getItem("employer_id") || "");
   const userId = employeeId || employerId;
-useEffect(() => {
-  if (employeeId) setRole("employee");
-  else if (employerId) setRole("employer");
-}, [employeeId, employerId]);
+  useEffect(() => {
+    if (employeeId) setRole("employee");
+    else if (employerId) setRole("employer");
+  }, [employeeId, employerId]);
 
   // Fetch team
   useEffect(() => {
@@ -41,7 +41,7 @@ useEffect(() => {
       .catch(() => setTeam([]));
   }, [userId]);
 
-  
+
   const fetchConversations = async () => {
     const res = await axios.get(`${BASE_URL}conversations/${userId}`);
     setConversations(res.data);
@@ -72,7 +72,7 @@ useEffect(() => {
 
     const res = await axios.get(`${BASE_URL}messages/${conv.id}`);
     setMessages(res.data);
-    console.log("message" + JSON.stringify(res.data,null,2));
+    console.log("message" + JSON.stringify(res.data, null, 2));
 
     ws.current = new WebSocket(`ws://localhost:8000/chat/ws/${conv.id}`);
 
@@ -106,9 +106,9 @@ useEffect(() => {
         id: res.data.message_id,
         sender_id: userId,
         text: text,
-        attachment_url: file ?  URL.createObjectURL(file) : null,
-        attachment_type: file ? "file" : null,
-        created_at: new Date().toISOString(),
+        attachment_url: res.data.attachment_url || null,   
+        attachment_type: res.data.attachment_type || null,
+        created_at: res.data.created_at || new Date().toISOString(),
       },
     ]);
     setFile(null);
@@ -132,40 +132,40 @@ useEffect(() => {
   };
 
   const createConversation = async () => {
-  if (
-    (chatType === "direct" && selectedMembers.length !== 1) ||
-    (chatType === "group" && selectedMembers.length < 2)
-  ) {
-    alert("Select enough members!");
-    return;
-  }
-  if (chatType === "group" && !groupName.trim()) {
-    alert("Group name required!");
-    return;
-  }
+    if (
+      (chatType === "direct" && selectedMembers.length !== 1) ||
+      (chatType === "group" && selectedMembers.length < 2)
+    ) {
+      alert("Select enough members!");
+      return;
+    }
+    if (chatType === "group" && !groupName.trim()) {
+      alert("Group name required!");
+      return;
+    }
 
-  try {
-    const participants = [userId, ...selectedMembers.map(u => u.id)];
-    const roles = [role, ...selectedMembers.map(u => u.role)];
+    try {
+      const participants = [userId, ...selectedMembers.map(u => u.id)];
+      const roles = [role, ...selectedMembers.map(u => u.role)];
 
-    const payload = {
-      type: chatType,
-      roles,        // must match backend
-      participants,
-      name: chatType === "group" ? groupName.trim() : selectedMembers[0]?.full_name || "Direct Chat"
-    };
+      const payload = {
+        type: chatType,
+        roles,        // must match backend
+        participants,
+        name: chatType === "group" ? groupName.trim() : selectedMembers[0]?.full_name || "Direct Chat"
+      };
 
-    await axios.post(`${BASE_URL}conversation`, payload);
-    await fetchConversations();
+      await axios.post(`${BASE_URL}conversation`, payload);
+      await fetchConversations();
 
-    setSelectedMembers([]);
-    setGroupName("");
-    setNewMessage(false);
-  } catch (err) {
-    console.error("Conversation creation failed:", err);
-    alert("Failed to create conversation. Check console for details.");
-  }
-};
+      setSelectedMembers([]);
+      setGroupName("");
+      setNewMessage(false);
+    } catch (err) {
+      console.error("Conversation creation failed:", err);
+      alert("Failed to create conversation. Check console for details.");
+    }
+  };
 
 
 
@@ -187,13 +187,13 @@ useEffect(() => {
         <div className="bg-white  flex flex-col h-[90vh] overflow-hidden">
           {!newMessage && (
             <>
-            <div className="flex  justify-between">
-              <button className="text-xs md:text-sm" onClick={onClose}>
-               <IoCloseSharp  className="bg-white w-4 h-4 text-purple-700"/>
-            </button>
-              
-            </div>
-            
+              <div className="flex  justify-between">
+                <button className="text-xs md:text-sm" onClick={onClose}>
+                  <IoCloseSharp className="bg-white w-4 h-4 text-purple-700" />
+                </button>
+
+              </div>
+
               <h2 className="font-bold mb-2 text-center mt-2 text-lg lg:text-xl">Conversations</h2>
               <ul className="flex-1 overflow-y-auto ">
                 {conversations.map((conv) => (
@@ -253,13 +253,12 @@ useEffect(() => {
                 {filteredTeam.map((member) => (
                   <li
                     key={`${member.id}-${member.role}`}
-                    className={`flex items-center p-2 cursor-pointer rounded hover:bg-purple-50 ${
-                      selectedMembers.includes(member) ? "bg-purple-100" : ""
-                    }`}
+                    className={`flex items-center p-2 cursor-pointer rounded hover:bg-purple-50 ${selectedMembers.includes(member) ? "bg-purple-100" : ""
+                      }`}
                     onClick={() => toggleMemberSelection(member)}
                   >
                     <img
-                      src={member.profile_pic || "/default-avatar.png"}
+                      src={`/api/${member.profile_pic}` || "/default-avatar.png"}
                       alt="avatar"
                       className="w-8 h-8 rounded-full mr-2"
                     />
@@ -290,7 +289,7 @@ useEffect(() => {
       {/* Chat View */}
       {activeConversation && (
         <div className="bg-white p-3 flex flex-col h-[90vh]">
-          
+
           <div className="flex items-center justify-between w-full relative">
             {/* Back Button */}
             <button
@@ -303,59 +302,64 @@ useEffect(() => {
             {/* Title */}
             <h2 className="font-bold text-lg text-center w-full">
               <div className="flex gap-4">
-              <img src={``} className="rounded-100 w-4 h-4"  />
-              <h1>{activeConversation.name}</h1>
+                <img src={``} className="rounded-100 w-4 h-4" />
+                <h1>{activeConversation.name}</h1>
               </div>
-              
+
             </h2>
           </div>
-         
-          
+
+
 
           <div className="flex-1 overflow-y-auto flex flex-col space-y-2 mb-2 pr-2">
-            {messages.map((msg,index) => (
+            {messages.map((msg, index) => (
               <div
                 key={msg.id || index}
-                className={`flex items-end ${
-                  msg.sender_id === userId ? "justify-end" : "justify-start"
-                }`}
+                className={`flex items-end ${msg.sender_id === userId ? "justify-end" : "justify-start"
+                  }`}
               >
-                {msg.sender_id !== userId && (
+                {/* {msg.sender_id !== userId && (
                   <img
-                    src={`/api/chat${msg.sender_profile || "/default-avatar.png"}`}
+                    src={`/api/${msg.sender_profile || "/default-avatar.png"}`}
                     alt="avatar"
                     className="w-8 h-8 rounded-full mr-2"
                   />
-                )}
+                )} */}
                 <div
-                  className={`px-3 py-2 rounded-lg max-w-xs break-words ${
-                    msg.sender_id === userId
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-900"
-                  }`}
+                  className={`px-3 py-2 rounded-lg max-w-xs break-words ${msg.sender_id === userId
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 text-gray-900"
+                    }`}
                 >
                   {msg.text}
                   {msg.attachment_url && (() => {
-                  const url = msg.attachment_url;
-                  const isImage = /\.(jpe?g|png|gif|webp|svg)$/i.test(url);
+                    const url = msg.attachment_url;
+                    const isImage = /\.(jpe?g|png|gif|webp|svg)$/i.test(url);
 
-                  return isImage ? (
-                    <img
-                      src={`/api/chat${url}`}
-                      alt="Attachment"
-                      className="mt-2 max-w-xs rounded-md border border-gray-300 shadow-sm"
-                    />
-                  ) : (
-                    <a
-                      href={url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="block text-xs text-blue-700 mt-1 underline"
-                    >
-                      📎 File
-                    </a>
-                  );
-                })()}
+                    return isImage ? (
+                      <>
+                        <div>
+                          <img
+                            src={`http://localhost:8000${url}`}
+                            alt="Attachment"
+                            className="mt-2 max-w-xs rounded-md border border-gray-300 shadow-sm"
+                          />
+                          <a href={`http://localhost:8000${url}`}>file</a>
+                        </div>
+                      </>
+
+
+                    ) : (
+                      <a
+                        href={`http://localhost:8000${url}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block text-xs text-blue-700 mt-1 underline"
+                      >
+                        📎 File
+                      </a>
+                    );
+                  })()}
 
                 </div>
               </div>

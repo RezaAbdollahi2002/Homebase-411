@@ -302,23 +302,27 @@ useEffect(() => {
 
             {/* Title */}
             <h2 className="font-bold text-lg text-center w-full">
-              {activeConversation.name}
+              <div className="flex gap-4">
+              <img src={``} className="rounded-100 w-4 h-4"  />
+              <h1>{activeConversation.name}</h1>
+              </div>
+              
             </h2>
           </div>
          
           
 
           <div className="flex-1 overflow-y-auto flex flex-col space-y-2 mb-2 pr-2">
-            {messages.map((msg) => (
+            {messages.map((msg,index) => (
               <div
-                key={msg.id || Math.random()}
+                key={msg.id || index}
                 className={`flex items-end ${
                   msg.sender_id === userId ? "justify-end" : "justify-start"
                 }`}
               >
                 {msg.sender_id !== userId && (
                   <img
-                    src={`${msg.sender_profile || "/default-avatar.png"}`}
+                    src={`/api/chat${msg.sender_profile || "/default-avatar.png"}`}
                     alt="avatar"
                     className="w-8 h-8 rounded-full mr-2"
                   />
@@ -331,17 +335,28 @@ useEffect(() => {
                   }`}
                 >
                   {msg.text}
-                  {msg.attachment_url && (
-                     <a
-                       href={msg.attachment_url}
-                      target="_blank"
-                       rel="noreferrer"
-                       className="block text-xs text-blue-700 mt-1"
-                    >
-                       📎 File
-                     </a>
+                  {msg.attachment_url && (() => {
+                  const url = msg.attachment_url;
+                  const isImage = /\.(jpe?g|png|gif|webp|svg)$/i.test(url);
 
-                  )}
+                  return isImage ? (
+                    <img
+                      src={`/api/chat${url}`}
+                      alt="Attachment"
+                      className="mt-2 max-w-xs rounded-md border border-gray-300 shadow-sm"
+                    />
+                  ) : (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block text-xs text-blue-700 mt-1 underline"
+                    >
+                      📎 File
+                    </a>
+                  );
+                })()}
+
                 </div>
               </div>
             ))}

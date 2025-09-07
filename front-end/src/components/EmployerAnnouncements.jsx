@@ -19,7 +19,7 @@ const EmployerAnnouncements = () => {
   const [attachment, setAttachment] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [showAll, setShowAll] = useState(false);
-  const [announcementId, setAnnouncementId] = useState(null);
+  const [announcementId, setAnnouncementId] = useState(null); 
 
   const { register, handleSubmit, formState: { errors } } = useForm();
 
@@ -361,7 +361,7 @@ const EmployerAnnouncements = () => {
       {announcements.length > 2 && (
         <div className="text-center mt-3">
           <button className="text-blue-600 underline" onClick={() => setShowAll(!showAll)}>
-            {showAll ? "Show Less" : "Show All"}
+            {showAll ? "Show Less" : `Show All (${announcements.length})`}
           </button>
         </div>
       )}

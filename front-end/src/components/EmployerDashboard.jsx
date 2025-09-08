@@ -51,7 +51,7 @@ useEffect(() => {
       <h1 className="text-center font-bold  text-xl md:text-2xl lg:text-3xl my-2">Hello back, {employerName}</h1>
       {/* Main dashboard content */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-10">
-        <div className={`bg-white rounded-xl p-4 shadow col-span-2`}>
+        <div className={`bg-black rounded-xl p-4 shadow col-span-2`}>
           {/* left panel */}
           <EmployerAnnouncements />
           

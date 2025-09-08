@@ -33,7 +33,7 @@ const EmployeeShiftsDashboard = ({ employee_id }) => {
         }, [employee_id]);
 
   return (
-    <div className="px-4 py-2 flex flex-col space-y-4">
+    <div className="px-4 py-2 flex flex-col space-y-4 text-white">
         
         <h1 className="md:text-xl text-lg mt-10 font-bold">My Shifts</h1>
       {loading && <p>Loading...</p>}
@@ -43,7 +43,7 @@ const EmployeeShiftsDashboard = ({ employee_id }) => {
       {!loading && !error && shifts.length === 0 && (
         <p className="text-black-500 font-semibold ">No shifts available</p>
       )}
-    <div className="p-4 rounded-lg shadow-xl  w-full max-w-full flex flex-col gap-y-4 border-gray-400 bg-[#a099a5]">
+    <div className="p-4 rounded-lg shadow-xl  w-full max-w-full flex flex-col gap-y-4 border-gray-400 bg-transparent">
         {!loading &&
         !error &&
         shifts.map((shift,index) => (
@@ -51,14 +51,14 @@ const EmployeeShiftsDashboard = ({ employee_id }) => {
                 
                 <div
                 key={index}
-                className="px-3 py-2 border border-gray-300 rounded-md shadow-2xl bg-white hover:scale-105 duration-300 "
+                className="bg-[#290f34] px-3 py-2 rounded-sm shadow-4xl hover:shadow-2xl hover:show-white  hover:scale-95 duration-200 "
             >
-                <h3 className="font-bold text-black">{shift.role}</h3>
-                <p className="text-gray-600">
+                <h3 className="font-bold text-gray-300">{shift.role}</h3>
+                <p className="text-white">
                 {new Date(shift.start_time).toLocaleString()} –{" "}
                 {new Date(shift.end_time).toLocaleString()}
                 </p>
-                <p>{shift.location}</p>
+                <p className="text-gray-200">{shift.location}</p>
             </div>
             </>
           

@@ -342,7 +342,7 @@ const Message = ({ onClose }) => {
                           <img
                             src={`http://localhost:8000${url}`}
                             alt="Attachment"
-                            className="mt-2 max-w-xs rounded-md border border-gray-300 shadow-sm"
+                            className="mt-2 max-w-[%5] rounded-md border border-gray-300 shadow-sm"
                           />
                           <a href={`http://localhost:8000${url}`}>file</a>
                         </div>

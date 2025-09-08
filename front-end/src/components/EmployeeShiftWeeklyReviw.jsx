@@ -46,7 +46,7 @@ const WeeklyReview = ({ employeeId }) => {
   }, [selectedDate, employeeId]);
 
   return (
-    <div className="flex flex-col gap-y-8">
+    <div className="flex flex-col gap-y-8 ">
             <div className="p-4 rounded-lg shadow-xl bg-white w-full max-w-full">
             <h2 className="text-lg font-bold mb-4">Your Week</h2>
 

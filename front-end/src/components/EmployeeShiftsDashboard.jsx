@@ -33,7 +33,7 @@ const EmployeeShiftsDashboard = ({ employee_id }) => {
         }, [employee_id]);
 
   return (
-    <div className="px-4 py-2 flex flex-col space-y-4 text-white">
+    <div className="px-4 py-2 flex flex-col space-y-4 text-black">
         
         <h1 className="md:text-xl text-lg mt-10 font-bold">My Shifts</h1>
       {loading && <p>Loading...</p>}

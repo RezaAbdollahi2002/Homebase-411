@@ -27,7 +27,7 @@ const EmployeeAnnouncement = () => {
   }, [employeeId]);
 
   return (
-    <div className="bg-transparent p-4 h-full text-white">
+    <div className="bg-transparent p-4 h-full text-lack">
       {announcements.length === 0 ? (
         <p className="text-white">No announcements found</p>
       ) : (
@@ -39,21 +39,21 @@ const EmployeeAnnouncement = () => {
               return (
                 <li key={a.id ?? index}>
 
-                  <div className=" shadow-xl px-2 py-1 hover:scale-95 duration-200 bg-[#172946] rounded-sm text-white">
-                    <div className='flex gap-1'>
+                  <div className=" shadow-xl px-2 py-1 hover:scale-95 duration-200 bg-gray-700 rounded-sm text-white">
+                    <div className='flex justify-between'>
                       <h1 className="text-white font-bold text-xl md:text-2xl text-center">{a.title}</h1>
 
-                      <button className='text-xs text-purple-800 ' onClick={() => setShowAttachment(!showAttachment)}>Attachment</button>
+                      <button className='text-xs text-gray-400 justify-between' onClick={() => setShowAttachment(!showAttachment)}>Attachment</button>
 
                     </div>
 
                     <hr />
                     {isExpanded ? (
-                      <p className="w-full break-words px-2 py-1">
+                      <p className="w-full break-words px-2 py-1 text-white">
                         {a.message}
                         <button
                           type="button"
-                          className="text-purple-700 text-xs ml-1 underline"
+                          className="text-blue-500 text-medium ml-1 underline"
                           onClick={() => setExpandedId(null)}
                         >
                           less
@@ -70,7 +70,7 @@ const EmployeeAnnouncement = () => {
                         {String(a.message ?? "").slice(0, 30)}
                         <button
                           type="button"
-                          className="text-purple-700 text-xs ml-1 underline"
+                          className="text-gray-400 text-xs ml-1 underline"
                           onClick={() => setExpandedId(a.id ?? index)}
                         >
                           ...more
